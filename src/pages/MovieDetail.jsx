@@ -7,6 +7,90 @@ import { getSupabase } from '../supabaseClient';
 import LogMovieModal from '../components/LogMovieModal';
 import './MovieDetail.css';
 
+// Content Safety Filter - Blacklisted keywords (case-insensitive)
+const ADULT_KEYWORDS = ['erotic', 'adult', 'sex', 'sexual', 'porn'];
+
+// Content Safety Filter - Blacklisted TMDB IDs
+const BLACKLISTED_IDS = [1015959];
+
+/**
+ * Check if movie content is safe to display
+ * @param {Object} movie - TMDB movie object
+ * @returns {boolean} - True if safe, false if should be blocked
+ */
+const isContentSafe = (movie) => {
+  if (!movie) return false;
+
+  // Check if ID is blacklisted
+  if (BLACKLISTED_IDS.includes(movie.id)) {
+    return false;
+  }
+
+  // Check title for adult keywords
+  const title = (movie.title || '').toLowerCase();
+  for (const keyword of ADULT_KEYWORDS) {
+    if (title.includes(keyword)) {
+      return false;
+    }
+  }
+
+  // Check overview for adult keywords
+  const overview = (movie.overview || '').toLowerCase();
+  for (const keyword of ADULT_KEYWORDS) {
+    if (overview.includes(keyword)) {
+      return false;
+    }
+  }
+
+  // Check genres for adult content
+  if (movie.genres && Array.isArray(movie.genres)) {
+    for (const genre of movie.genres) {
+      const genreName = (genre.name || '').toLowerCase();
+      for (const keyword of ADULT_KEYWORDS) {
+        if (genreName.includes(keyword)) {
+          return false;
+        }
+      }
+    }
+  }
+
+  return true;
+};
+
+/**
+ * Filter recommendations for adult content
+ * @param {Array} recommendations - Array of movie recommendations
+ * @returns {Array} - Filtered recommendations
+ */
+const filterRecommendations = (recommendations) => {
+  if (!recommendations || !Array.isArray(recommendations)) return [];
+
+  return recommendations.filter(movie => {
+    // Skip blacklisted IDs
+    if (BLACKLISTED_IDS.includes(movie.id)) {
+      return false;
+    }
+
+    // Check title for adult keywords
+    const title = (movie.title || '').toLowerCase();
+    for (const keyword of ADULT_KEYWORDS) {
+      if (title.includes(keyword)) {
+        return false;
+      }
+    }
+
+    // Check overview for adult keywords
+    const overview = (movie.overview || '').toLowerCase();
+    for (const keyword of ADULT_KEYWORDS) {
+      if (overview.includes(keyword)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+};
+
 // Mood category colors (same as LibraryPage)
 const MOOD_COLORS = {
   emotional: 'mood-warm',
@@ -63,9 +147,21 @@ function MovieDetail() {
 
       // Fetch full movie details from TMDB
       const movieData = await getMovieDetails(id);
+      
       if (movieData) {
+        // SAFETY CHECK: Block adult/blacklisted content
+        if (!isContentSafe(movieData)) {
+          console.warn('Blocked adult/blacklisted content:', movieData.title, movieData.id);
+          navigate('/', { replace: true });
+          setIsLoading(false);
+          return;
+        }
+
         setMovie(movieData);
-        setRecommendations(movieData.recommendations?.results?.slice(0, 6) || []);
+        
+        // SAFETY CHECK: Filter recommendations
+        const filteredRecs = filterRecommendations(movieData.recommendations?.results || []);
+        setRecommendations(filteredRecs.slice(0, 6));
 
         // Fetch RT score from OMDb using IMDB ID
         if (movieData.imdb_id) {
