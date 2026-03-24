@@ -62,15 +62,7 @@ body {
   transform: scale(1.02);
 }
 
-/* Center Section - Search */
-.header-center {
-  flex: 1;
-  max-width: 400px;
-  display: flex;
-  justify-content: center;
-  position: relative;
-  z-index: 10;
-}
+/* Center Section - Search (REMOVED) */
 
 /* Right Section - Navigation */
 .header-right {
@@ -288,12 +280,6 @@ body {
     flex-shrink: 0;
   }
 
-  .header-center {
-    max-width: none;
-    flex: 1;
-    min-width: 0;
-  }
-
   .global-search {
     width: 100%;
   }
@@ -320,11 +306,6 @@ body {
 
   .logo span {
     font-size: 16px;
-  }
-
-  .header-center {
-    width: 100%;
-    max-width: 100%;
   }
 
   .search-input {

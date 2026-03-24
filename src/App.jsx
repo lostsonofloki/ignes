@@ -4,7 +4,6 @@ import Logo from './components/Logo';
 import IgnesLogo from './components/IgnesLogo';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
-import GlobalSearch from './components/GlobalSearch';
 import SearchPage from './pages/SearchPage';
 import TrendingMovies from './pages/TrendingMovies';
 import MovieDetail from './pages/MovieDetail';
@@ -38,11 +37,6 @@ function Header() {
           <Link to="/" className="logo">
             <IgnesLogo size={40} showText={true} />
           </Link>
-        </div>
-
-        {/* Center: Search */}
-        <div className="header-center">
-          <GlobalSearch />
         </div>
 
         {/* Right: Hamburger Menu Button (Mobile) */}
