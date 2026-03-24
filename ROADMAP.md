@@ -241,9 +241,10 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 | 6.6 | **Light Mode** | Theme toggle (currently dark mode only) | ⬜ |
 | 6.7 | **Social Features** | Friends, following, and activity feeds | ⬜ |
 | 6.8 | **Year in Review** | Annual wrapped-style statistics summary | ⬜ |
-| 6.9 | **Custom Lists** | User-created movie collections | ⬜ |
+| 6.9 | **Custom Lists** | User-created movie collections | ✅ |
 | 6.10 | **Advanced Search** | Multi-criteria search with filters | ⬜ |
 | 6.11 | **The Archive Importer** | Mass import tool for migrating movie lists | ⬜ |
+| 6.12 | **Bug Report System** | In-app bug reporting with admin dashboard | ✅ |
 
 ### Deliverables
 - Social media integration for sharing logs
@@ -298,7 +299,9 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 
 ## 🎯 Current Status
 
-**Phase**: Phase 5 Complete ✅ | Phase 6: Future Enhancements (Planned)
+**Phase**: Phase 5 Complete ✅ | Phase 6: Future Enhancements (In Progress)
+
+**Current Version**: v1.2.0 - Bug Reports & About Page Release
 
 **Completed Features**:
 - ✅ **Mobile-First Responsive Navbar** - Hamburger menu (mobile) / Inline nav links (desktop 768px+)
@@ -336,6 +339,10 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 - ✅ **Creepy Footer Styling** - Creepster font with blood red glow effect
 - ✅ **Stats Dashboard** - Recharts-based analytics with genre, mood, and rating visualizations
 - ✅ **Components Demo Page** - Showcase of all UI components for testing and development
+- ✅ **Custom Lists** (v1.1.0) - User-created movie collections with toast notifications
+- ✅ **Tailwind CSS** (v1.2.0) - Full utility-first CSS framework with Deep Ember theme
+- ✅ **About/Roadmap Page** (v1.2.0) - Ignes Hub with changelog and roadmap
+- ✅ **Bug Report System** (v1.2.0) - In-app bug reporting with admin dashboard
 
 **Phase 5 Complete - AI Integration**:
 - ✅ **Gemini AI** - Google AI integration for personalized recommendations

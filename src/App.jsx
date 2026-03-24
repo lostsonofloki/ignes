@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { UserProvider, useUser } from './context/UserContext';
+import { ListProvider } from './context/ListContext';
+import { ToastProvider } from './context/ToastContext';
 import IgnesLogo from './components/IgnesLogo';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -13,6 +15,8 @@ import ProfilePage from './pages/ProfilePage';
 import WatchHistory from './pages/WatchHistory';
 import ActorPage from './pages/ActorPage';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
+import AboutPage from './pages/AboutPage';
+import BugList from './components/BugList';
 import { useState } from 'react';
 import './App.css';
 
@@ -140,6 +144,8 @@ function AppContent() {
           <Route path="/update-password" element={<UpdatePasswordPage />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/history" element={<WatchHistory />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/admin/bugs" element={<BugList />} />
           <Route
             path="/profile"
             element={
@@ -161,7 +167,11 @@ function App() {
   return (
     <Router>
       <UserProvider>
-        <AppContent />
+        <ListProvider>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </ListProvider>
       </UserProvider>
     </Router>
   );

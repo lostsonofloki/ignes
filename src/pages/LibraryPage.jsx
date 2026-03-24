@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { getSupabase } from '../supabaseClient';
 import LogMovieModal from '../components/LogMovieModal';
+import AddToListButton from '../components/AddToListButton';
 import './LibraryPage.css';
 
 // Mood category colors
@@ -380,6 +381,17 @@ function LibraryPage() {
                             </svg>
                           </div>
                         )}
+                        {/* Add to List Button Overlay */}
+                        <div className="up-next-actions" onClick={(e) => e.stopPropagation()}>
+                          <AddToListButton 
+                            movie={{ 
+                              tmdb_id: movie.tmdb_id, 
+                              title: movie.title, 
+                              poster_path: movie.poster?.replace('https://image.tmdb.org/t/p/w500', '') 
+                            }} 
+                            className="add-to-list-up-next"
+                          />
+                        </div>
                       </div>
                       <div className="up-next-info">
                         <h3 className="up-next-title-text">{movie.title}</h3>
@@ -463,16 +475,31 @@ function LibraryPage() {
 
                 {/* Actions */}
                 <div className="card-actions">
+                  <AddToListButton
+                    movie={{
+                      tmdb_id: movie.tmdb_id,
+                      title: movie.title,
+                      poster_path: movie.poster?.replace('https://image.tmdb.org/t/p/w500', '')
+                    }}
+                    className="add-to-list-library"
+                  />
                   <button
                     className="edit-btn"
                     onClick={(e) => handleEdit(e, movie)}
                   >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '18px', height: '18px' }}>
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
                     Edit
                   </button>
                   <button
                     className="delete-btn"
                     onClick={(e) => handleDelete(e, movie.id)}
                   >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '18px', height: '18px' }}>
+                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                    </svg>
                     Delete
                   </button>
                 </div>

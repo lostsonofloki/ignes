@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getRottenTomatoesScore, getMovieDetails } from '../api/omdb';
 import LogMovieModal from './LogMovieModal';
+import AddToListButton from './AddToListButton';
 import './MovieCard.css';
 
 /**
@@ -55,9 +56,16 @@ function MovieCard({ movie, onLogMovie }) {
     }
   };
 
-  const posterSrc = movie.Poster && movie.Poster !== 'N/A' 
-    ? movie.Poster 
+  const posterSrc = movie.Poster && movie.Poster !== 'N/A'
+    ? movie.Poster
     : 'https://via.placeholder.com/300x450/1a1a1a/444444?text=No+Poster';
+
+  // Prepare movie data for AddToListButton (needs TMDB format)
+  const listMovieData = {
+    tmdb_id: movie.tmdb_id,
+    title: movie.Title,
+    poster_path: movie.Poster && movie.Poster !== 'N/A' ? movie.Poster.replace('https://image.tmdb.org/t/p/w500', '') : null,
+  };
 
   return (
     <>
@@ -81,12 +89,15 @@ function MovieCard({ movie, onLogMovie }) {
             <p className="movie-card-genre">{details.Genre}</p>
           )}
 
-          <button
-            className="log-movie-button"
-            onClick={handleLogClick}
-          >
-            Log Movie
-          </button>
+          <div className="movie-card-actions">
+            <AddToListButton movie={listMovieData} className="add-to-list-inline" />
+            <button
+              className="log-movie-button"
+              onClick={handleLogClick}
+            >
+              Log Movie
+            </button>
+          </div>
         </div>
       </div>
 

@@ -119,14 +119,44 @@
     height: 14px;
   }
 
-  .footer-attribution {
+.footer-attribution {
     font-size: 9px;
   }
+}
+
+.footer-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer-link {
+  color: #f9a84b;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border: 1px solid rgba(249, 168, 75, 0.3);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.footer-link:hover {
+  background: rgba(249, 168, 75, 0.1);
+  border-color: #f9a84b;
+  color: #f56505;
 }
 
 @media (max-width: 480px) {
   .footer-dedication {
     font-size: 12px;
     letter-spacing: 0.5px;
+  }
+
+  .footer-actions {
+    flex-direction: column;
+    gap: 12px;
   }
 }

@@ -5,6 +5,7 @@ import { getRtScoreByImdbId } from '../api/omdb';
 import { useUser } from '../context/UserContext';
 import { getSupabase } from '../supabaseClient';
 import LogMovieModal from '../components/LogMovieModal';
+import AddToListButton from '../components/AddToListButton';
 import './MovieDetail.css';
 
 // Content Safety Filter - Blacklisted keywords (case-insensitive)
@@ -345,16 +346,26 @@ function MovieDetail() {
                 ))}
               </div>
 
-              {/* FIX 5: Add relative z-50 to ensure button is on top */}
-              <button
-                className="log-movie-btn relative z-50"
-                onClick={handleLogMovie}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-                {userLog ? 'Edit Log' : 'Log Movie'}
-              </button>
+              {/* Action Buttons */}
+              <div className="movie-actions">
+                <AddToListButton 
+                  movie={{ 
+                    tmdb_id: movie.id, 
+                    title: movie.title, 
+                    poster_path: movie.poster_path 
+                  }} 
+                  className="add-to-list-detail"
+                />
+                <button
+                  className="log-movie-btn relative z-50"
+                  onClick={handleLogMovie}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  {userLog ? 'Edit Log' : 'Log Movie'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

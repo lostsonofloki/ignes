@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom';
 import './Footer.css';
+import ReportBugButton from './ReportBugButton';
 
 // TMDB Logo from your assets folder
 // Official TMDB attribution logo: https://www.themoviedb.org/about/logos-attribution
@@ -27,6 +29,10 @@ function Footer() {
           <p className="footer-attribution">
             This product uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB. Movie ratings provided by OMDb.
           </p>
+        </div>
+        <div className="footer-actions">
+          <ReportBugButton variant="link" className="footer-bug-report" />
+          <Link to="/about" className="footer-link">About / Roadmap</Link>
         </div>
       </div>
     </footer>

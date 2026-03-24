@@ -271,6 +271,32 @@
   border-radius: 20px;
 }
 
+.movie-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.add-to-list-detail {
+  flex: 1;
+  min-width: 160px;
+  max-width: 220px;
+}
+
+.add-to-list-detail .add-to-list-button {
+  width: 100%;
+  justify-content: center;
+  padding: 12px 20px;
+  font-size: 14px;
+}
+
+.add-to-list-detail .add-to-list-button svg {
+  width: 18px;
+  height: 18px;
+}
+
 .log-movie-btn {
   display: inline-flex;
   align-items: center;

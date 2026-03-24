@@ -395,6 +395,32 @@
   color: #333333;
 }
 
+.up-next-actions {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 10;
+}
+
+.add-to-list-up-next .add-to-list-button {
+  width: 100%;
+  justify-content: center;
+  font-size: 11px;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+}
+
+.add-to-list-up-next .add-to-list-button:hover {
+  background: rgba(126, 34, 206, 0.9);
+}
+
+.add-to-list-up-next .add-to-list-button svg {
+  width: 14px;
+  height: 14px;
+}
+
 .up-next-info {
   display: flex;
   flex-direction: column;
@@ -591,41 +617,72 @@
 /* Actions */
 .card-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   margin-top: auto;
+  align-items: center;
 }
 
+.add-to-list-library,
 .edit-btn,
 .delete-btn {
   flex: 1;
-  padding: 8px 12px;
+  padding: 8px 10px;
   font-size: 12px;
-  font-weight: 500;
-  border-radius: 6px;
+  font-weight: 600;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  white-space: nowrap;
 }
 
+/* Add to List - Red Gradient */
+.add-to-list-library .add-to-list-button {
+  width: 100%;
+  justify-content: center;
+  background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+  color: #ffffff;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.add-to-list-library .add-to-list-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(153, 27, 27, 0.3);
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+}
+
+.add-to-list-library .add-to-list-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Edit - Purple Gradient */
 .edit-btn {
-  color: #c084fc;
-  background: transparent;
-  border: 1px solid #3a2a4a;
+  background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%);
+  color: #ffffff;
 }
 
 .edit-btn:hover {
-  background: rgba(126, 34, 205, 0.1);
-  border-color: #7e22ce;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(126, 34, 206, 0.3);
+  background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%);
 }
 
+/* Delete - Dark Red Gradient */
 .delete-btn {
-  color: #f87171;
-  background: transparent;
-  border: 1px solid #3a2a2a;
+  background: linear-gradient(135deg, #7f1d1d 0%, #5c1515 100%);
+  color: #ffffff;
 }
 
 .delete-btn:hover {
-  background: rgba(153, 27, 27, 0.1);
-  border-color: #991b1b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(127, 29, 29, 0.3);
+  background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
 }
 
 /* Responsive */
