@@ -1,10 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { UserProvider, useUser } from './context/UserContext';
-import Logo from './components/Logo';
 import IgnesLogo from './components/IgnesLogo';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
-import GlobalSearch from './components/GlobalSearch';
 import SearchPage from './pages/SearchPage';
 import TrendingMovies from './pages/TrendingMovies';
 import MovieDetail from './pages/MovieDetail';
@@ -21,6 +19,8 @@ import './App.css';
 function Header() {
   const { user, isAuthenticated, logout } = useUser();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     await logout();
@@ -29,6 +29,14 @@ function Header() {
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
   };
 
   return (
@@ -47,29 +55,44 @@ function Header() {
       gap: '20px'
     }}>
       {/* Logo */}
-      <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
+      <Link to="/" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
         <IgnesLogo size={35} showText={true} />
       </Link>
 
-      {/* Desktop Navigation */}
-      <div style={{ display: 'flex', gap: '15px' }}>
-        <Link to="/" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>Trending</Link>
-        <Link to="/library" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>My Library</Link>
-        <Link to="/history" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>History</Link>
+      {/* Navigation Links */}
+      <div style={{ display: 'flex', gap: '15px', flexShrink: 0 }}>
+        <Link to="/" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>Trending</Link>
+        <Link to="/library" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>My Library</Link>
+        <Link to="/history" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>History</Link>
         {isAuthenticated ? (
           <>
-            <Link to="/profile" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '600' }}>{user?.username}</Link>
-            <button onClick={handleLogout} style={{ color: '#fff', background: 'transparent', border: '1px solid #333', padding: '6px 12px', cursor: 'pointer', borderRadius: '6px' }}>Logout</button>
+            <Link to="/profile" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', fontWeight: '600' }}>{user?.username}</Link>
+            <button onClick={handleLogout} style={{ color: '#ffffff', background: 'transparent', border: '1px solid #333', padding: '6px 12px', cursor: 'pointer', borderRadius: '6px' }}>Logout</button>
           </>
         ) : (
-          <Link to="/login" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>Login</Link>
+          <Link to="/login" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>Login</Link>
         )}
       </div>
 
-      {/* Desktop Search */}
-      <div style={{ flex: 1, maxWidth: '400px' }}>
-        <GlobalSearch />
-      </div>
+      {/* Search Form */}
+      <form onSubmit={handleSearch} style={{ flex: 1, maxWidth: '400px', display: 'flex' }}>
+        <input
+          type="text"
+          placeholder="Search movies..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            fontSize: '14px',
+            background: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '6px',
+            color: '#ffffff',
+            outline: 'none'
+          }}
+        />
+      </form>
 
       {/* Mobile Menu Button */}
       <button
