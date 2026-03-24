@@ -732,9 +732,41 @@ function ProfilePage() {
     return null;
   }
 
+  // ALERT TO CONFIRM CODE IS RUNNING
+  if (typeof window !== 'undefined') {
+    window.alert('IGNES SEARCH ACTIVE');
+  }
+
   return (
     <div className="profile-page">
       <div className="profile-container">
+        
+        {/* HARD-CODED SEARCH BAR - RIGHT AT TOP */}
+        <div style={{ marginBottom: '20px' }}>
+          <input
+            type="text"
+            placeholder="Seek the Archive..."
+            onChange={(e) => {
+              if (e.target.value.trim()) {
+                navigate(`/search?q=${encodeURIComponent(e.target.value.trim())}`);
+                e.target.value = '';
+              }
+            }}
+            style={{
+              border: '2px solid #991b1b',
+              background: '#111',
+              color: 'white',
+              width: '100%',
+              padding: '15px',
+              zIndex: 1000,
+              position: 'relative',
+              borderRadius: '12px',
+              fontSize: '16px',
+              outline: 'none',
+            }}
+          />
+        </div>
+
         {/* Profile Header */}
         <div className="profile-header">
           {/* Clickable Avatar */}
@@ -893,56 +925,7 @@ function ProfilePage() {
             When enabled, Ignes uses Gemini AI to analyze your moods and suggest your next watch.
             Your data is never used for training.
           </p>
-          
-          {/* HARD-CODED SEARCH BAR - FORCE VISIBLE */}
-          <div style={{ position: 'relative', zIndex: 9999, background: '#000', padding: '20px', maxWidth: '700px', margin: '20px auto', borderRadius: '12px', border: '2px solid #991b1b' }}>
-            {console.log('--- SEARCH BAR RENDERED IN PROFILE ---')}
-            <form onSubmit={handleProfileSearch} style={{ display: 'flex', gap: '12px' }}>
-              <div style={{ position: 'relative', flex: 1 }}>
-                <svg
-                  style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', width: '20px', height: '20px', color: '#666', pointerEvents: 'none' }}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="M21 21l-4.35-4.35" />
-                </svg>
-                <input
-                  type="text"
-                  name="search"
-                  placeholder="Seek the Archive..."
-                  style={{
-                    width: '100%',
-                    padding: '14px 44px 14px 48px',
-                    fontSize: '16px',
-                    border: '2px solid #991b1b',
-                    borderRadius: '12px',
-                    background: '#121212',
-                    color: '#ffffff',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-              <button
-                type="submit"
-                style={{
-                  padding: '14px 28px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  color: '#ffffff',
-                  background: 'linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%)',
-                  border: 'none',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                }}
-              >
-                Search
-              </button>
-            </form>
-          </div>
-          
+
           {aiEnabled ? (
             <>
               <div className="ai-enabled-badge">

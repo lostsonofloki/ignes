@@ -88,6 +88,33 @@ function TrendingMovies() {
 
   return (
     <div className="trending-page">
+      
+      {/* HARD-CODED SEARCH BAR - RIGHT AT TOP */}
+      <div style={{ padding: '0 24px', marginBottom: '20px' }}>
+        <input
+          type="text"
+          placeholder="Seek the Archive..."
+          onChange={(e) => {
+            if (e.target.value.trim()) {
+              navigate(`/search?q=${encodeURIComponent(e.target.value.trim())}`);
+              e.target.value = '';
+            }
+          }}
+          style={{
+            border: '2px solid #991b1b',
+            background: '#111',
+            color: 'white',
+            width: '100%',
+            padding: '15px',
+            zIndex: 1000,
+            position: 'relative',
+            borderRadius: '12px',
+            fontSize: '16px',
+            outline: 'none',
+          }}
+        />
+      </div>
+      
       <div className="trending-header">
         <h1 className="trending-title">Trending Movies</h1>
         <div className="time-window-toggle">
@@ -110,55 +137,6 @@ function TrendingMovies() {
             This Week
           </button>
         </div>
-      </div>
-
-      {/* HARD-CODED SEARCH BAR - FORCE VISIBLE */}
-      <div style={{ position: 'relative', zIndex: 9999, background: '#000', padding: '20px', maxWidth: '700px', margin: '80px auto 24px', borderRadius: '12px', border: '2px solid #991b1b' }}>
-        {console.log('--- SEARCH BAR RENDERED IN TRENDING ---')}
-        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '12px' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <svg
-              style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', width: '20px', height: '20px', color: '#666', pointerEvents: 'none' }}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="M21 21l-4.35-4.35" />
-            </svg>
-            <input
-              type="text"
-              name="search"
-              placeholder="Seek the Archive..."
-              style={{
-                width: '100%',
-                padding: '14px 44px 14px 48px',
-                fontSize: '16px',
-                border: '2px solid #991b1b',
-                borderRadius: '12px',
-                background: '#121212',
-                color: '#ffffff',
-                outline: 'none',
-              }}
-            />
-          </div>
-          <button
-            type="submit"
-            style={{
-              padding: '14px 28px',
-              fontSize: '16px',
-              fontWeight: '600',
-              color: '#ffffff',
-              background: 'linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%)',
-              border: 'none',
-              borderRadius: '12px',
-              cursor: 'pointer',
-            }}
-          >
-            Search
-          </button>
-        </form>
       </div>
 
       {/* Power Filter Bar */}
