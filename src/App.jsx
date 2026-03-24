@@ -21,12 +21,6 @@ import './App.css';
 function Header() {
   const { user, isAuthenticated, logout } = useUser();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  // PROOF OF LIFE ALERT
-  if (typeof window !== 'undefined') {
-    window.alert('IGNES HEADER DEPLOYED');
-  }
 
   const handleLogout = async () => {
     await logout();
@@ -37,67 +31,74 @@ function Header() {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const toggleSearch = () => {
-    setIsSearchOpen(!isSearchOpen);
-  };
-
   return (
-    <header className="app-header">
-      <div className="header-container">
-        {/* Left: Ignes Logo */}
-        <div className="header-left">
-          <Link to="/" className="logo">
-            <IgnesLogo size={40} showText={true} />
-          </Link>
-        </div>
+    <header style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '70px',
+      background: '#000000',
+      borderBottom: '2px solid #333',
+      zIndex: 99999,
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0 20px',
+      gap: '20px'
+    }}>
+      {/* Logo */}
+      <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
+        <IgnesLogo size={35} showText={true} />
+      </Link>
 
-        {/* Center: Search (Desktop) */}
-        <div className="header-center">
-          <GlobalSearch />
-        </div>
-
-        {/* Right: Search Icon (Mobile) + Hamburger */}
-        <div className="header-right">
-          {/* Mobile Search Toggle */}
-          <button className="search-toggle-btn" onClick={toggleSearch} aria-label="Toggle search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <path d="M21 21l-4.35-4.35" />
-            </svg>
-          </button>
-
-          {/* Hamburger Menu Button */}
-          <button className="hamburger-btn" onClick={toggleMenu} aria-label="Toggle menu">
-            <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
-            <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
-            <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
-          </button>
-        </div>
-
-        {/* Mobile Search Bar (Expands) */}
-        <div className={`mobile-search-bar ${isSearchOpen ? 'search-open' : ''}`}>
-          <GlobalSearch />
-        </div>
+      {/* Desktop Search */}
+      <div style={{ flex: 1, maxWidth: '400px' }}>
+        <GlobalSearch />
       </div>
 
-      {/* Mobile Slide-out Menu */}
-      <div className={`mobile-menu ${isMenuOpen ? 'menu-open' : ''}`}>
-        <div className="mobile-menu-content">
-          <Link to="/" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Trending</Link>
-          <Link to="/library" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>My Library</Link>
-          <Link to="/history" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>History</Link>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={toggleMenu}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '10px'
+        }}
+        aria-label="Menu"
+      >
+        <span style={{ display: 'block', width: '25px', height: '3px', background: '#fff', margin: '5px 0' }}></span>
+        <span style={{ display: 'block', width: '25px', height: '3px', background: '#fff', margin: '5px 0' }}></span>
+        <span style={{ display: 'block', width: '25px', height: '3px', background: '#fff', margin: '5px 0' }}></span>
+      </button>
+
+      {/* Mobile Menu Dropdown */}
+      {isMenuOpen && (
+        <div style={{
+          position: 'absolute',
+          top: '70px',
+          left: 0,
+          right: 0,
+          background: '#121212',
+          padding: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          zIndex: 99998
+        }}>
+          <Link to="/" style={{ color: '#fff', textDecoration: 'none', padding: '10px' }}>Trending</Link>
+          <Link to="/library" style={{ color: '#fff', textDecoration: 'none', padding: '10px' }}>My Library</Link>
+          <Link to="/history" style={{ color: '#fff', textDecoration: 'none', padding: '10px' }}>History</Link>
           {isAuthenticated ? (
             <>
-              <Link to="/profile" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>
-                {user?.username}
-              </Link>
-              <button onClick={handleLogout} className="mobile-logout-btn">Logout</button>
+              <Link to="/profile" style={{ color: '#fff', textDecoration: 'none', padding: '10px' }}>{user?.username}</Link>
+              <button onClick={handleLogout} style={{ color: '#fff', background: 'transparent', border: 'none', padding: '10px', cursor: 'pointer' }}>Logout</button>
             </>
           ) : (
-            <Link to="/login" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Login</Link>
+            <Link to="/login" style={{ color: '#fff', textDecoration: 'none', padding: '10px' }}>Login</Link>
           )}
         </div>
-      </div>
+      )}
     </header>
   );
 }

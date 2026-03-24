@@ -262,6 +262,7 @@ body {
 .app-main {
   flex: 1;
   width: 100%;
+  padding-top: 80px;
 }
 
 /* Footer Styles - Minimalist */
