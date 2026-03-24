@@ -62,14 +62,58 @@ body {
   transform: scale(1.02);
 }
 
-/* Center Section - Search (REMOVED) */
+/* Center Section - Search */
+.header-center {
+  flex: 1;
+  max-width: 400px;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 10;
+}
 
-/* Right Section - Navigation */
+/* Right Section - Navigation + Icons */
 .header-right {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Search Toggle Button (Mobile) */
+.search-toggle-btn {
+  display: none;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.search-toggle-btn svg {
+  width: 24px;
+  height: 24px;
+  color: #ffffff;
+}
+
+/* Mobile Search Bar */
+.mobile-search-bar {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding: 0 16px;
+}
+
+.mobile-search-bar.search-open {
+  max-height: 80px;
+  padding: 12px 16px;
+}
+
+.mobile-search-bar .global-search {
+  width: 100%;
+  max-width: none;
 }
 
 /* Hamburger Menu Button */
@@ -266,22 +310,25 @@ body {
     gap: 12px;
   }
 
-  /* Show hamburger button on mobile */
-  .hamburger-btn {
+  /* Hide desktop navigation on mobile */
+  .header-right {
     display: flex;
   }
 
-  /* Hide desktop navigation on mobile */
-  .header-right {
+  /* Hide desktop search on mobile */
+  .header-center {
     display: none;
+  }
+
+  /* Show search toggle button */
+  .search-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .header-left {
     flex-shrink: 0;
-  }
-
-  .global-search {
-    width: 100%;
   }
 
   .logo span {
@@ -306,11 +353,6 @@ body {
 
   .logo span {
     font-size: 16px;
-  }
-
-  .search-input {
-    font-size: 14px;
-    padding: 8px 36px 8px 36px;
   }
 
   .mobile-menu {
