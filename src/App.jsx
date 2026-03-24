@@ -51,6 +51,21 @@ function Header() {
         <IgnesLogo size={35} showText={true} />
       </Link>
 
+      {/* Desktop Navigation */}
+      <div style={{ display: 'flex', gap: '15px' }}>
+        <Link to="/" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>Trending</Link>
+        <Link to="/library" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>My Library</Link>
+        <Link to="/history" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>History</Link>
+        {isAuthenticated ? (
+          <>
+            <Link to="/profile" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '600' }}>{user?.username}</Link>
+            <button onClick={handleLogout} style={{ color: '#fff', background: 'transparent', border: '1px solid #333', padding: '6px 12px', cursor: 'pointer', borderRadius: '6px' }}>Logout</button>
+          </>
+        ) : (
+          <Link to="/login" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>Login</Link>
+        )}
+      </div>
+
       {/* Desktop Search */}
       <div style={{ flex: 1, maxWidth: '400px' }}>
         <GlobalSearch />
@@ -63,7 +78,8 @@ function Header() {
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
-          padding: '10px'
+          padding: '10px',
+          display: 'none'
         }}
         aria-label="Menu"
       >
