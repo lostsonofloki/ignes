@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
+import { getSupabase } from '../supabaseClient';
 import './LoginPage.css';
 
 /**
@@ -10,7 +11,10 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   const { login } = useUser();
   const navigate = useNavigate();
@@ -37,6 +41,34 @@ function LoginPage() {
     }
   };
 
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setIsSubmitting(true);
+
+    try {
+      if (!resetEmail) {
+        throw new Error('Please enter your email address');
+      }
+
+      const supabase = getSupabase();
+      const redirectUrl = `${window.location.origin}/update-password`;
+      
+      await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: redirectUrl,
+      });
+
+      setSuccess('Check your email for the Ignes reset link!');
+      setResetEmail('');
+      setShowResetForm(false);
+    } catch (err) {
+      setError(err.message || 'Failed to send reset email. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="login-page">
       <div className="login-container">
@@ -58,53 +90,125 @@ function LoginPage() {
               </div>
             )}
 
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                className="form-input"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isSubmitting}
-                autoComplete="email"
-              />
-            </div>
+            {success && (
+              <div className="success-message">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+                <span>{success}</span>
+              </div>
+            )}
 
-            <div className="form-group">
-              <label htmlFor="password" className="form-label">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                className="form-input"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isSubmitting}
-                autoComplete="current-password"
-              />
-            </div>
+            {!showResetForm ? (
+              <>
+                <div className="form-group">
+                  <label htmlFor="email" className="form-label">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    className="form-input"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isSubmitting}
+                    autoComplete="email"
+                  />
+                </div>
 
-            <button
-              type="submit"
-              className="login-button"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <span className="button-loading">
-                  <span className="loading-dot"></span>
-                  <span className="loading-dot"></span>
-                  <span className="loading-dot"></span>
-                </span>
-              ) : (
-                'Sign In'
-              )}
-            </button>
+                <div className="form-group">
+                  <label htmlFor="password" className="form-label">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    className="form-input"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isSubmitting}
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="login-button"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <span className="button-loading">
+                      <span className="loading-dot"></span>
+                      <span className="loading-dot"></span>
+                      <span className="loading-dot"></span>
+                    </span>
+                  ) : (
+                    'Sign In'
+                  )}
+                </button>
+
+                <div className="forgot-password-row">
+                  <button
+                    type="button"
+                    className="forgot-password-btn"
+                    onClick={() => setShowResetForm(true)}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="form-group">
+                  <label htmlFor="reset-email" className="form-label">
+                    Enter your email
+                  </label>
+                  <input
+                    id="reset-email"
+                    type="email"
+                    className="form-input"
+                    placeholder="you@example.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    disabled={isSubmitting}
+                    autoComplete="email"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="reset-button"
+                  disabled={isSubmitting}
+                  onClick={handleResetPassword}
+                >
+                  {isSubmitting ? (
+                    <span className="button-loading">
+                      <span className="loading-dot"></span>
+                      <span className="loading-dot"></span>
+                      <span className="loading-dot"></span>
+                    </span>
+                  ) : (
+                    'Send Reset Link'
+                  )}
+                </button>
+
+                <div className="forgot-password-row">
+                  <button
+                    type="button"
+                    className="back-to-login-btn"
+                    onClick={() => {
+                      setShowResetForm(false);
+                      setError('');
+                      setSuccess('');
+                    }}
+                  >
+                    ← Back to Login
+                  </button>
+                </div>
+              </>
+            )}
           </form>
 
           <p className="login-footer">

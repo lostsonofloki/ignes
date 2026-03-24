@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { UserProvider, useUser } from './context/UserContext';
 import Logo from './components/Logo';
 import IgnesLogo from './components/IgnesLogo';
@@ -13,6 +13,7 @@ import LibraryPage from './pages/LibraryPage';
 import ProfilePage from './pages/ProfilePage';
 import WatchHistory from './pages/WatchHistory';
 import ActorPage from './pages/ActorPage';
+import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import { useState } from 'react';
 import './App.css';
 
@@ -87,9 +88,14 @@ function Header() {
 }
 
 function AppContent() {
+  const location = useLocation();
+  
+  // Hide header on auth pages
+  const isAuthPage = ['/login', '/register', '/update-password'].includes(location.pathname);
+
   return (
     <div className="app">
-      <Header />
+      {!isAuthPage && <Header />}
 
       <main className="app-main">
         <Routes>
@@ -99,6 +105,7 @@ function AppContent() {
           <Route path="/actor/:id" element={<ActorPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/update-password" element={<UpdatePasswordPage />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/history" element={<WatchHistory />} />
           <Route
