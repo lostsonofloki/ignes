@@ -732,42 +732,9 @@ function ProfilePage() {
     return null;
   }
 
-  // ALERT TO CONFIRM CODE IS RUNNING
-  if (typeof window !== 'undefined') {
-    window.alert('IGNES SEARCH ACTIVE');
-  }
-
   return (
     <div className="profile-page">
       <div className="profile-container">
-        
-        {/* HARD-CODED SEARCH BAR - RIGHT AT TOP */}
-        <div style={{ marginBottom: '20px', marginTop: '1rem' }}>
-          <input
-            type="text"
-            placeholder="Seek the Archive..."
-            onChange={(e) => {
-              if (e.target.value.trim()) {
-                navigate(`/search?q=${encodeURIComponent(e.target.value.trim())}`);
-                e.target.value = '';
-              }
-            }}
-            style={{
-              border: '2px solid #991b1b',
-              background: '#111',
-              color: 'white',
-              width: '100%',
-              maxWidth: '400px',
-              padding: '15px',
-              zIndex: 10,
-              position: 'relative',
-              borderRadius: '12px',
-              fontSize: '16px',
-              outline: 'none',
-            }}
-          />
-        </div>
-
         {/* Profile Header */}
         <div className="profile-header">
           {/* Clickable Avatar */}
