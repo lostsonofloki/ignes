@@ -14,13 +14,20 @@ import LibraryPage from './pages/LibraryPage';
 import ProfilePage from './pages/ProfilePage';
 import WatchHistory from './pages/WatchHistory';
 import ActorPage from './pages/ActorPage';
+import { useState } from 'react';
 import './App.css';
 
 function Header() {
   const { user, isAuthenticated, logout } = useUser();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
+    setIsMenuOpen(false);
+  };
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
 
   return (
@@ -38,22 +45,46 @@ function Header() {
           <GlobalSearch />
         </div>
 
-        {/* Right: Navigation */}
-        <div className="header-right">
-          <Link to="/" className="nav-link">Trending</Link>
-          <Link to="/library" className="nav-link">My Library</Link>
-          <Link to="/history" className="nav-link">History</Link>
+        {/* Right: Hamburger Menu Button (Mobile) */}
+        <button className="hamburger-btn" onClick={toggleMenu} aria-label="Toggle menu">
+          <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
+          <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
+          <span className={`hamburger-line ${isMenuOpen ? 'open' : ''}`}></span>
+        </button>
+
+        {/* Right: Navigation (Desktop) */}
+        <div className={`header-right ${isMenuOpen ? 'menu-open' : ''}`}>
+          <Link to="/" className="nav-link" onClick={() => setIsMenuOpen(false)}>Trending</Link>
+          <Link to="/library" className="nav-link" onClick={() => setIsMenuOpen(false)}>My Library</Link>
+          <Link to="/history" className="nav-link" onClick={() => setIsMenuOpen(false)}>History</Link>
           {isAuthenticated ? (
             <>
-              <Link to="/profile" className="nav-link nav-username">
+              <Link to="/profile" className="nav-link nav-username" onClick={() => setIsMenuOpen(false)}>
                 {user?.username}
               </Link>
-              <button onClick={handleLogout} className="nav-logout">
-                Logout
-              </button>
+              <button onClick={handleLogout} className="nav-logout">Logout</button>
             </>
           ) : (
-            <Link to="/login" className="nav-link">Login</Link>
+            <Link to="/login" className="nav-link" onClick={() => setIsMenuOpen(false)}>Login</Link>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Slide-out Menu */}
+      <div className={`mobile-menu ${isMenuOpen ? 'menu-open' : ''}`}>
+        <div className="mobile-menu-content">
+          <Link to="/" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Trending</Link>
+          <Link to="/library" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>My Library</Link>
+          <Link to="/history" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>History</Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/profile" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>
+                {user?.username}
+              </Link>
+              <button onClick={handleLogout} className="mobile-logout-btn">Logout</button>
+            </>
+          ) : (
+            <Link to="/login" className="mobile-nav-link" onClick={() => setIsMenuOpen(false)}>Login</Link>
           )}
         </div>
       </div>
