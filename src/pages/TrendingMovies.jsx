@@ -90,7 +90,7 @@ function TrendingMovies() {
     <div className="trending-page">
       
       {/* HARD-CODED SEARCH BAR - RIGHT AT TOP */}
-      <div style={{ padding: '0 24px', marginBottom: '20px' }}>
+      <div style={{ padding: '0 24px', marginBottom: '20px', marginTop: '1rem' }}>
         <input
           type="text"
           placeholder="Seek the Archive..."
@@ -105,8 +105,9 @@ function TrendingMovies() {
             background: '#111',
             color: 'white',
             width: '100%',
+            maxWidth: '400px',
             padding: '15px',
-            zIndex: 1000,
+            zIndex: 10,
             position: 'relative',
             borderRadius: '12px',
             fontSize: '16px',

@@ -54,6 +54,8 @@ body {
   gap: 12px;
   text-decoration: none;
   transition: transform 0.2s ease;
+  position: relative;
+  z-index: 10;
 }
 
 .logo:hover {
@@ -66,6 +68,8 @@ body {
   max-width: 400px;
   display: flex;
   justify-content: center;
+  position: relative;
+  z-index: 10;
 }
 
 /* Right Section - Navigation */
@@ -173,11 +177,17 @@ body {
   .header-container {
     padding: 12px 16px;
     gap: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-left {
+    width: 100%;
   }
 
   .header-center {
-    max-width: none;
-    flex: 1;
+    max-width: 100%;
+    width: 100%;
     min-width: 0;
   }
 
@@ -187,6 +197,8 @@ body {
 
   .header-right {
     gap: 4px;
+    width: 100%;
+    justify-content: center;
   }
 
   .nav-link {
@@ -212,6 +224,7 @@ body {
   .header-container {
     padding: 10px 12px;
     gap: 12px;
+    flex-direction: column;
   }
 
   .logo svg {
@@ -223,16 +236,8 @@ body {
     font-size: 16px;
   }
 
-  .nav-link {
-    padding: 6px 10px;
-    font-size: 12px;
-  }
-
-  .nav-username {
-    display: none;
-  }
-
   .header-center {
+    width: 100%;
     max-width: 100%;
   }
 
