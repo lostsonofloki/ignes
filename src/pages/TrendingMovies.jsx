@@ -113,7 +113,7 @@ function TrendingMovies() {
       </div>
 
       {/* HARD-CODED SEARCH BAR - FORCE VISIBLE */}
-      <div style={{ position: 'relative', zIndex: 9999, marginTop: '80px', padding: '20px', maxWidth: '700px', margin: '80px auto 24px' }}>
+      <div style={{ position: 'relative', zIndex: 9999, background: '#000', padding: '20px', maxWidth: '700px', margin: '80px auto 24px', borderRadius: '12px', border: '2px solid #991b1b' }}>
         {console.log('--- SEARCH BAR RENDERED IN TRENDING ---')}
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: '12px' }}>
           <div style={{ position: 'relative', flex: 1 }}>

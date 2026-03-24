@@ -895,7 +895,7 @@ function ProfilePage() {
           </p>
           
           {/* HARD-CODED SEARCH BAR - FORCE VISIBLE */}
-          <div style={{ position: 'relative', zIndex: 9999, padding: '20px', maxWidth: '700px', margin: '20px auto' }}>
+          <div style={{ position: 'relative', zIndex: 9999, background: '#000', padding: '20px', maxWidth: '700px', margin: '20px auto', borderRadius: '12px', border: '2px solid #991b1b' }}>
             {console.log('--- SEARCH BAR RENDERED IN PROFILE ---')}
             <form onSubmit={handleProfileSearch} style={{ display: 'flex', gap: '12px' }}>
               <div style={{ position: 'relative', flex: 1 }}>

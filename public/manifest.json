@@ -3,7 +3,7 @@
   "name": "Ignes - Movie Logging & Visualization",
   "icons": [
     {
-      "src": "/resources/IgnesMain.png",
+      "src": "./resources/IgnesMain.png",
       "type": "image/png",
       "sizes": "512x512"
     }
