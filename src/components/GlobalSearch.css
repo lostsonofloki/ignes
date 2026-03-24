@@ -75,11 +75,6 @@
 
 @media (max-width: 768px) {
   .global-search {
-    max-width: 100%;
-  }
-  
-  .search-input {
-    padding: 8px 36px 8px 36px;
-    font-size: 14px;
+    display: none;
   }
 }

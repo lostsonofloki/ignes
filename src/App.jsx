@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { UserProvider, useUser } from './context/UserContext';
 import IgnesLogo from './components/IgnesLogo';
 import Footer from './components/Footer';
@@ -18,17 +18,17 @@ import './App.css';
 
 function Header() {
   const { user, isAuthenticated, logout } = useUser();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     await logout();
-    setIsMenuOpen(false);
+    setIsMobileMenuOpen(false);
   };
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   const handleSearch = (e) => {
@@ -36,108 +36,85 @@ function Header() {
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
+      setIsMobileMenuOpen(false);
     }
   };
 
   return (
-    <header style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: '70px',
-      background: '#000000',
-      borderBottom: '2px solid #333',
-      zIndex: 99999,
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 20px',
-      gap: '20px'
-    }}>
-      {/* Logo */}
-      <Link to="/" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-        <IgnesLogo size={35} showText={true} />
-      </Link>
+    <header className="app-header">
+      <div className="header-container">
+        {/* Logo */}
+        <Link to="/" className="logo-link">
+          <IgnesLogo size={35} showText={true} />
+        </Link>
 
-      {/* Navigation Links */}
-      <div style={{ display: 'flex', gap: '15px', flexShrink: 0 }}>
-        <Link to="/" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>Trending</Link>
-        <Link to="/library" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>My Library</Link>
-        <Link to="/history" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>History</Link>
-        {isAuthenticated ? (
-          <>
-            <Link to="/profile" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', fontWeight: '600' }}>{user?.username}</Link>
-            <button onClick={handleLogout} style={{ color: '#ffffff', background: 'transparent', border: '1px solid #333', padding: '6px 12px', cursor: 'pointer', borderRadius: '6px' }}>Logout</button>
-          </>
-        ) : (
-          <Link to="/login" style={{ color: '#ffffff', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>Login</Link>
-        )}
-      </div>
-
-      {/* Search Form */}
-      <form onSubmit={handleSearch} style={{ flex: 1, maxWidth: '400px', display: 'flex' }}>
-        <input
-          type="text"
-          placeholder="Search movies..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '8px 12px',
-            fontSize: '14px',
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '6px',
-            color: '#ffffff',
-            outline: 'none'
-          }}
-        />
-      </form>
-
-      {/* Mobile Menu Button */}
-      <button
-        onClick={toggleMenu}
-        style={{
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          padding: '10px',
-          display: 'none'
-        }}
-        aria-label="Menu"
-      >
-        <span style={{ display: 'block', width: '25px', height: '3px', background: '#fff', margin: '5px 0' }}></span>
-        <span style={{ display: 'block', width: '25px', height: '3px', background: '#fff', margin: '5px 0' }}></span>
-        <span style={{ display: 'block', width: '25px', height: '3px', background: '#fff', margin: '5px 0' }}></span>
-      </button>
-
-      {/* Mobile Menu Dropdown */}
-      {isMenuOpen && (
-        <div style={{
-          position: 'absolute',
-          top: '70px',
-          left: 0,
-          right: 0,
-          background: '#121212',
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-          zIndex: 99998
-        }}>
-          <Link to="/" style={{ color: '#fff', textDecoration: 'none', padding: '10px' }}>Trending</Link>
-          <Link to="/library" style={{ color: '#fff', textDecoration: 'none', padding: '10px' }}>My Library</Link>
-          <Link to="/history" style={{ color: '#fff', textDecoration: 'none', padding: '10px' }}>History</Link>
+        {/* Desktop Navigation */}
+        <nav className="desktop-nav">
+          <Link to="/" className="nav-link">Trending</Link>
+          <Link to="/library" className="nav-link">My Library</Link>
+          <Link to="/history" className="nav-link">History</Link>
           {isAuthenticated ? (
             <>
-              <Link to="/profile" style={{ color: '#fff', textDecoration: 'none', padding: '10px' }}>{user?.username}</Link>
-              <button onClick={handleLogout} style={{ color: '#fff', background: 'transparent', border: 'none', padding: '10px', cursor: 'pointer' }}>Logout</button>
+              <Link to="/profile" className="nav-link nav-username">{user?.username}</Link>
+              <button onClick={handleLogout} className="nav-logout">Logout</button>
             </>
           ) : (
-            <Link to="/login" style={{ color: '#fff', textDecoration: 'none', padding: '10px' }}>Login</Link>
+            <Link to="/login" className="nav-link">Login</Link>
+          )}
+        </nav>
+
+        {/* Desktop Search Form */}
+        <form onSubmit={handleSearch} className="header-search">
+          <input
+            type="text"
+            placeholder="Search the Archives..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="search-input"
+          />
+        </form>
+
+        {/* Hamburger Menu Button (Mobile) */}
+        <button
+          className="hamburger-btn"
+          onClick={toggleMobileMenu}
+          aria-label="Toggle menu"
+          aria-expanded={isMobileMenuOpen}
+        >
+          <span className="hamburger-line"></span>
+          <span className="hamburger-line"></span>
+          <span className="hamburger-line"></span>
+        </button>
+      </div>
+
+      {/* Mobile Menu Dropdown */}
+      <div className={`mobile-menu ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+        <div className="mobile-menu-content">
+          
+          {/* MOBILE SEARCH BAR - Inline styles to prevent CSS conflicts */}
+          <form onSubmit={handleSearch} className="mobile-search-form" style={{ display: 'flex', width: '100%', marginBottom: '15px' }}>
+            <input
+              type="text"
+              placeholder="Search Ignes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #991b1b', borderRadius: '8px', color: '#ffffff', outline: 'none' }}
+            />
+          </form>
+
+          <Link to="/" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>Trending</Link>
+          <Link to="/library" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>My Library</Link>
+          <Link to="/history" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>History</Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/profile" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>{user?.username}</Link>
+              <button onClick={handleLogout} className="mobile-logout-btn">Logout</button>
+            </>
+          ) : (
+            <Link to="/login" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>Login</Link>
           )}
         </div>
-      )}
+      </div>
     </header>
   );
 }
