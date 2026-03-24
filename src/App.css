@@ -359,3 +359,11 @@ body {
     top: 60px;
   }
 }
+
+/* CSS Reset for Header/Navbar - Remove any borders */
+.app-header, .navbar, .header-container {
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}

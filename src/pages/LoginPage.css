@@ -195,19 +195,19 @@
 .back-to-login-btn {
   background: transparent;
   border: none;
-  color: #991b1b;
+  color: #ffffff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   padding: 8px 16px;
-  border-radius: 6px;
+  text-decoration: underline;
 }
 
 .forgot-password-btn:hover,
 .back-to-login-btn:hover {
-  background: rgba(153, 27, 27, 0.1);
-  color: #7f1d1d;
+  color: #cccccc;
+  text-decoration: none;
 }
 
 .reset-button {
