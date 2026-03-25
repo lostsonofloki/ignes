@@ -1,9 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUser } from '../context/UserContext';
 import { getSupabase } from '../supabaseClient';
 import { discoverMovies } from '../utils/gemini';
 import { fetchTMDBMovie } from '../api/tmdb';
 import './DiscoveryPage.css';
+
+// ============================================
+// DEBOUNCE HOOK - Delays function execution
+// ============================================
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 const MOOD_PRESETS = [
   { id: 'cozy', label: 'Cozy', icon: '🕯️', prompt: 'A comforting, warm film for a quiet night in' },
@@ -57,6 +76,10 @@ function DiscoveryPage() {
   const [userFavorites, setUserFavorites] = useState([]);
   const [rejectedIds, setRejectedIds] = useState([]);
   const [rejectedTitles, setRejectedTitles] = useState([]);
+  const inputRef = useRef(null);
+
+  // Debounce custom prompt to prevent firing on every keystroke
+  const debouncedPrompt = useDebounce(customPrompt, 500);
 
   // Fetch user's top-rated movies for context (FIXED: stable dependency array)
   useEffect(() => {
@@ -78,15 +101,14 @@ function DiscoveryPage() {
       }
     };
     fetchFavorites();
-  }, [user?.id]); // Stable dependency - only refetch if user.id changes
+  }, [user?.id]);
 
-  // Auto-discover when mood/prompt changes (FIXED: stable dependency array)
+  // Auto-discover when debounced prompt changes (not on every keystroke)
   useEffect(() => {
-    if (customPrompt && customPrompt.trim()) {
+    if (debouncedPrompt && debouncedPrompt.trim() && selectedMood) {
       handleDiscover();
     }
-    // Only depend on customPrompt string, not the whole function
-  }, [customPrompt]);
+  }, [debouncedPrompt]);
 
   const handleMoodSelect = (mood) => {
     setSelectedMood(mood);
@@ -195,9 +217,10 @@ function DiscoveryPage() {
           <label className="prompt-label">Or describe your vibe:</label>
           <div className="prompt-input-wrapper">
             <textarea
+              ref={inputRef}
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyPress}
               placeholder="e.g., 'A sci-fi film that explores loneliness with stunning visuals'"
               className="prompt-input"
               rows={3}

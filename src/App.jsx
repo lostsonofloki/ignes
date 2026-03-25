@@ -19,6 +19,7 @@ import AboutPage from './pages/AboutPage';
 import ChangelogPage from './pages/ChangelogPage';
 import BugList from './components/BugList';
 import DiscoveryPage from './pages/DiscoveryPage';
+import SearchBar from './components/SearchBar';
 import { useState } from 'react';
 import './App.css';
 
@@ -108,29 +109,6 @@ function parseVibe(input) {
 
   console.log('🔍 parseVibe input:', lowerInput, '→ output:', Array.from(genres));
   return Array.from(genres);
-}
-
-// ============================================
-// SEARCHBAR - Compact with purple sparkle
-// ============================================
-function SearchBar({ onSearch, onOpenOracle, fullWidth = false }) {
-  return (
-    <div className={`relative flex items-center ${fullWidth ? 'w-full' : 'w-72'}`}>
-      <input
-        type="text"
-        placeholder="Search..."
-        onChange={(e) => onSearch(e.target.value)}
-        className={`w-full rounded-full border border-white/10 bg-zinc-900/50 py-2 pl-5 pr-12 text-sm text-zinc-200 placeholder-zinc-500 outline-none focus:border-orange-500/50 transition-all`}
-      />
-      <button
-        onClick={(e) => { e.preventDefault(); onOpenOracle(); }}
-        className="absolute right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white transition-all"
-        title="Ask the Oracle"
-      >
-        <span className="text-sm">✨</span>
-      </button>
-    </div>
-  );
 }
 
 // ============================================
