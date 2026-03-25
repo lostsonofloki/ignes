@@ -19,14 +19,11 @@ import AboutPage from './pages/AboutPage';
 import ChangelogPage from './pages/ChangelogPage';
 import BugList from './components/BugList';
 import DiscoveryPage from './pages/DiscoveryPage';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import './App.css';
 
 console.log('--- APP IS USING THE NEW CODE ---');
 
-// ============================================
-// VIBE MAP - Maps natural language to TMDB genre IDs
-// ============================================
 const VIBE_MAP = {
   dark: [80, 53],
   comedy: [35],
@@ -177,13 +174,13 @@ function OracleOverlay({ isOpen, onClose, onOracleSearch }) {
 }
 
 // ============================================
-// HEADER - RAW HTML INPUT (NO BULLSHIT FIX)
+// HEADER - UNCONTROLLED INPUT WITH useRef
 // ============================================
 function Header({ onOracleClick }) {
   const { user, isAuthenticated, logout } = useUser();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [searchInput, setSearchInput] = useState('');
+  const searchRef = useRef(null);
 
   const handleLogout = async () => {
     await logout();
@@ -208,20 +205,21 @@ function Header({ onOracleClick }) {
             <Link to="/history" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">History</Link>
           </nav>
           <div className="flex items-center gap-4 ml-auto">
-            {/* Desktop Search - RAW HTML FORM */}
+            {/* Desktop Search - UNCONTROLLED INPUT */}
             <form 
               onSubmit={(e) => {
                 e.preventDefault();
-                if (searchInput.trim()) {
-                  navigate(`/search?q=${encodeURIComponent(searchInput.trim())}`);
+                const query = searchRef.current?.value?.trim();
+                if (query) {
+                  navigate(`/search?q=${encodeURIComponent(query)}`);
+                  searchRef.current.value = '';
                 }
               }}
               className="flex items-center"
             >
               <input
+                ref={searchRef}
                 type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search movies..."
                 className="w-64 bg-zinc-900 text-zinc-200 border border-zinc-700 rounded-md px-4 py-2 focus:outline-none focus:border-amber-500"
               />
@@ -251,21 +249,22 @@ function Header({ onOracleClick }) {
       {isMobileMenuOpen && (
         <div className="md:hidden border-t border-white/5 bg-zinc-950 px-6 py-4">
           <nav className="flex flex-col space-y-4">
-            {/* Mobile Search - RAW HTML FORM */}
+            {/* Mobile Search - UNCONTROLLED INPUT */}
             <form 
               onSubmit={(e) => {
                 e.preventDefault();
-                if (searchInput.trim()) {
-                  navigate(`/search?q=${encodeURIComponent(searchInput.trim())}`);
+                const query = searchRef.current?.value?.trim();
+                if (query) {
+                  navigate(`/search?q=${encodeURIComponent(query)}`);
+                  searchRef.current.value = '';
                   setIsMobileMenuOpen(false);
                 }
               }}
               className="flex items-center w-full"
             >
               <input
+                ref={searchRef}
                 type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search movies..."
                 className="w-full bg-zinc-900 text-zinc-200 border border-zinc-700 rounded-md px-4 py-2 focus:outline-none focus:border-amber-500"
               />

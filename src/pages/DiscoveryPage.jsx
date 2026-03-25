@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUser } from '../context/UserContext';
 import { getSupabase } from '../supabaseClient';
 import { discoverMovies } from '../utils/gemini';
@@ -49,7 +49,6 @@ Instead of "This film is dark and moody," say "Rehane's use of natural lighting 
 function DiscoveryPage() {
   const { user } = useUser();
   const [selectedMood, setSelectedMood] = useState(null);
-  const [customPrompt, setCustomPrompt] = useState('');
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [recommendation, setRecommendation] = useState(null);
   const [tmdbData, setTmdbData] = useState(null);
@@ -57,8 +56,8 @@ function DiscoveryPage() {
   const [userFavorites, setUserFavorites] = useState([]);
   const [rejectedIds, setRejectedIds] = useState([]);
   const [rejectedTitles, setRejectedTitles] = useState([]);
+  const promptRef = useRef(null);
 
-  // Fetch user's top-rated movies for context
   useEffect(() => {
     const fetchFavorites = async () => {
       if (!user?.id) return;
@@ -80,24 +79,16 @@ function DiscoveryPage() {
     fetchFavorites();
   }, [user?.id]);
 
-  // Debounced auto-discover when mood preset is selected
-  useEffect(() => {
-    if (!selectedMood || !customPrompt.trim()) return;
-    
-    const timer = setTimeout(() => {
-      handleDiscover();
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [customPrompt, selectedMood]);
-
   const handleMoodSelect = (mood) => {
     setSelectedMood(mood);
-    setCustomPrompt(mood.prompt);
+    if (promptRef.current) {
+      promptRef.current.value = mood.prompt;
+    }
   };
 
   const handleDiscover = async (additionalRejectedIds = [], additionalRejectedTitles = []) => {
-    if (!customPrompt.trim()) return;
+    const promptValue = promptRef.current?.value?.trim();
+    if (!promptValue) return;
 
     setIsDiscovering(true);
     setError('');
@@ -117,7 +108,7 @@ function DiscoveryPage() {
       const systemPrompt = `${BASE_SYSTEM_PROMPT}${rejectedContext}`;
 
       const aiResponse = await discoverMovies({
-        mood: customPrompt,
+        mood: promptValue,
         userContext,
         systemPrompt,
       });
@@ -164,14 +155,12 @@ function DiscoveryPage() {
   return (
     <div className="discovery-page">
       <div className="discovery-container">
-        {/* Header */}
         <div className="discovery-header">
           <div className="oracle-icon">🔮</div>
           <h1>Ember Oracle</h1>
           <p className="oracle-tagline">AI-powered film discovery for the discerning viewer</p>
         </div>
 
-        {/* Mood Bubbles */}
         <div className="mood-bubbles">
           {MOOD_PRESETS.map((mood) => (
             <button
@@ -185,13 +174,11 @@ function DiscoveryPage() {
           ))}
         </div>
 
-        {/* Custom Prompt Input - RAW HTML TEXTAREA */}
         <div className="prompt-section">
           <label className="prompt-label">Or describe your vibe:</label>
           <div className="prompt-input-wrapper">
             <textarea
-              value={customPrompt}
-              onChange={(e) => setCustomPrompt(e.target.value)}
+              ref={promptRef}
               onKeyDown={handleKeyDown}
               placeholder="e.g., 'A sci-fi film that explores loneliness with stunning visuals'"
               className="prompt-input"
@@ -201,7 +188,7 @@ function DiscoveryPage() {
             <button
               className="discover-btn"
               onClick={handleDiscover}
-              disabled={isDiscovering || !customPrompt.trim()}
+              disabled={isDiscovering}
             >
               {isDiscovering ? (
                 <>
@@ -218,7 +205,6 @@ function DiscoveryPage() {
           </div>
         </div>
 
-        {/* Error State */}
         {error && (
           <div className="error-message">
             <span className="error-icon">⚠️</span>
@@ -226,7 +212,6 @@ function DiscoveryPage() {
           </div>
         )}
 
-        {/* Recommendation Card */}
         {recommendation && (
           <div className="recommendation-card animate-in fade-in">
             <div className="rec-poster-container">
@@ -263,7 +248,6 @@ function DiscoveryPage() {
                 <p className="rationale-text">{recommendation.rationale}</p>
               </div>
 
-              {/* Action Buttons */}
               <div className="rec-actions">
                 {tmdbData?.id && (
                   <a
@@ -276,7 +260,6 @@ function DiscoveryPage() {
                   </a>
                 )}
 
-                {/* Reject & Reroll Button - Deep Ember Theme */}
                 <button
                   className="reject-reroll-btn"
                   onClick={handleRejectAndReroll}
@@ -291,7 +274,6 @@ function DiscoveryPage() {
                 </button>
               </div>
 
-              {/* Rejected Count Badge */}
               {rejectedTitles.length > 0 && (
                 <div className="rejected-count">
                   <span className="rejected-badge">{rejectedTitles.length}</span>
@@ -302,7 +284,6 @@ function DiscoveryPage() {
           </div>
         )}
 
-        {/* Empty State */}
         {!recommendation && !isDiscovering && !error && (
           <div className="empty-state">
             <div className="empty-icon">🎬</div>
