@@ -16,6 +16,7 @@ import WatchHistory from './pages/WatchHistory';
 import ActorPage from './pages/ActorPage';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import AboutPage from './pages/AboutPage';
+import ChangelogPage from './pages/ChangelogPage';
 import BugList from './components/BugList';
 import DiscoveryPage from './pages/DiscoveryPage';
 import { useState } from 'react';
@@ -251,7 +252,7 @@ function Header({ onOracleClick }) {
         {/* Left: Logo */}
         <Link to="/" className="flex items-center gap-2">
           <IgnesLogo size={28} />
-          <span className="hidden sm:inline text-xl font-bold tracking-tighter text-white hover:opacity-80">
+          <span className="text-xl font-bold tracking-tighter text-white hover:opacity-80">
             IGNES
           </span>
         </Link>
@@ -452,6 +453,7 @@ function AppContent() {
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/history" element={<WatchHistory />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/changelog" element={<ChangelogPage />} />
           <Route path="/admin/bugs" element={<BugList />} />
           <Route
             path="/discover"

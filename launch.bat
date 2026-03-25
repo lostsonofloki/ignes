@@ -1,9 +1,9 @@
 @echo off
-title Ignes v1.3.6
+title Ignes v1.3.8
 echo.
 echo ========================================
 echo   IG NES - Movie Logging Platform
-echo   Version: 1.3.6 - Mobile Header Fixed
+echo   Version: 1.3.8 - Logo Text Fixed
 echo ========================================
 echo.
 cd /d "%~dp0"

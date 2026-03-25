@@ -1,0 +1,254 @@
+.changelog-page {
+  min-height: 100vh;
+  padding: 60px 24px;
+  background: #0a0a0a;
+}
+
+.changelog-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Header */
+.changelog-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.header-content {
+  padding: 40px;
+  background: linear-gradient(135deg, #171717 0%, #262626 100%);
+  border-radius: 20px;
+  border: 1px solid #262626;
+}
+
+.changelog-title {
+  font-size: 42px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.title-icon {
+  font-size: 48px;
+}
+
+.changelog-subtitle {
+  font-size: 16px;
+  color: #a3a3a3;
+  margin: 0 0 24px 0;
+}
+
+.back-to-hub-link {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #262626;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.back-to-hub-link:hover {
+  background: #404040;
+}
+
+/* Version Sections */
+.version-section {
+  margin-bottom: 32px;
+  padding: 32px;
+  background: #171717;
+  border: 1px solid #262626;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+.version-section:hover {
+  border-color: #404040;
+}
+
+.version-section.latest {
+  border-color: #f97316;
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
+}
+
+.version-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #262626;
+}
+
+.version-number {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.version-date {
+  font-size: 14px;
+  color: #717171;
+}
+
+.version-highlight {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f97316;
+  margin: 0 0 16px 0;
+}
+
+/* Changelog List */
+.changelog-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.changelog-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  font-size: 15px;
+  color: #d4d4d4;
+  line-height: 1.6;
+  border-bottom: 1px solid #262626;
+}
+
+.changelog-list li:last-child {
+  border-bottom: none;
+}
+
+.badge-new {
+  display: inline-block;
+  padding: 3px 8px;
+  background: #22c55e;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.badge-fix {
+  display: inline-block;
+  padding: 3px 8px;
+  background: #f97316;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+/* Older Versions */
+.version-section.older {
+  background: #121212;
+}
+
+.older-note {
+  font-size: 15px;
+  color: #a3a3a3;
+  text-align: center;
+  padding: 20px;
+}
+
+.github-link {
+  color: #f97316;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.github-link:hover {
+  text-decoration: underline;
+}
+
+/* Footer */
+.changelog-footer {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid #262626;
+  text-align: center;
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.version-label {
+  font-size: 13px;
+  color: #717171;
+}
+
+.back-home-link {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #262626;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.back-home-link:hover {
+  background: #404040;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+  .changelog-page {
+    padding: 40px 16px;
+  }
+
+  .changelog-title {
+    font-size: 32px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .title-icon {
+    font-size: 36px;
+  }
+
+  .version-section {
+    padding: 20px;
+  }
+
+  .version-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .version-number {
+    font-size: 24px;
+  }
+
+  .changelog-list li {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+}

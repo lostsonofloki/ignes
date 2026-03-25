@@ -4,7 +4,7 @@
  */
 
 // Application Version
-export const APP_VERSION = '1.3.6';
+export const APP_VERSION = '1.3.8';
 
 // Theme Colors
 export const THEME_COLORS = {

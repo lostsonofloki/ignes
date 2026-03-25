@@ -101,14 +101,9 @@ function AboutPage() {
             </div>
           </div>
           <div className="changelog-footer">
-            <a 
-              href="/CHANGELOG.md" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="view-all-link"
-            >
+            <Link to="/changelog" className="view-all-link">
               View Full Changelog →
-            </a>
+            </Link>
           </div>
         </section>
 

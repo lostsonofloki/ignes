@@ -7,24 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## Latest Version: 1.3.6 (March 24, 2026)
+## Latest Version: 1.3.8 (March 24, 2026)
 
 **Highlights:**
-- 🔧 Mobile header completely rewritten - no more spillover
+- 🔧 Logo text "IGNES" now visible on all screen sizes
+- 📝 Changelog page with dedicated route (/changelog)
 - 🤖 Ember Oracle with Reject & Reroll feature
 - 🔐 Remember Me checkbox with dynamic storage
 - 📱 Responsive library grid (`grid-cols-2 md:grid-cols-4 lg:grid-cols-6`)
 - 🎯 Oracle vibe mapping fixed - "Brain Mush" now works
 
 **Quick Links:**
-- [Full v1.3.6 Notes](#136---2026-03-24)
-- [Ember Oracle v1.3.2](#132---2026-03-24)
+- [Full v1.3.8 Notes](#138---march-24-2026)
+- [Ember Oracle v1.3.2](#132---march-24-2026)
 - [Roadmap](./ROADMAP.md)
 - [README](./README.md)
 
 ---
 
-## [1.3.6] - 2026-03-24
+## [1.3.8] - March 24, 2026
+
+### 🐛 Fixed
+
+#### Logo Text Visibility
+- **IGNES Text Now Visible on Mobile** - Removed `hidden sm:inline` class
+- **Consistent Branding** - Logo + text visible on ALL screen sizes
+- **Flex Alignment** - `flex items-center gap-2` ensures proper spacing
+
+---
+
+## [1.3.7] - March 24, 2026
+
+### 🐛 Fixed
+
+#### AboutPage Changelog Link
+- **Broken Link Fixed** - Changed from raw markdown link to React Router `<Link to="/changelog">`
+- **New Route Added** - `/changelog` route now exists in App.jsx
+
+### 🎉 Added
+
+#### ChangelogPage Component
+- **Dedicated Changelog Page** - Full-page view of version history
+- **Version Sections** - v1.3.1 through v1.3.6 documented with badges
+- **Navigation** - "Back to Ignes Hub" and "Back to Home" links
+- **Deep Ember Theme** - Dark zinc backgrounds with orange accents
+- **Mobile Responsive** - Stacked layout on small screens
+
+### 📁 New Files
+- `src/pages/ChangelogPage.jsx` - Full changelog display component
+- `src/pages/ChangelogPage.css` - Styling with responsive breakpoints
+
+---
+
+## [1.3.6] - March 24, 2026
 
 ### 🐛 Fixed
 
