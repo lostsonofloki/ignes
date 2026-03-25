@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
+import { useToast } from '../context/ToastContext';
 import { getSupabase } from '../supabaseClient';
 import { discoverMovies } from '../utils/gemini';
 import { fetchTMDBMovie } from '../api/tmdb';
+import LogMovieModal from '../components/LogMovieModal';
 import './DiscoveryPage.css';
 
 const MOOD_PRESETS = [
@@ -48,6 +50,7 @@ Instead of "This film is dark and moody," say "Rehane's use of natural lighting 
 
 function DiscoveryPage() {
   const { user } = useUser();
+  const toast = useToast();
   const [selectedMood, setSelectedMood] = useState(null);
   const [tempPrompt, setTempPrompt] = useState('');
   const [isDiscovering, setIsDiscovering] = useState(false);
@@ -57,6 +60,12 @@ function DiscoveryPage() {
   const [userFavorites, setUserFavorites] = useState([]);
   const [rejectedIds, setRejectedIds] = useState([]);
   const [rejectedTitles, setRejectedTitles] = useState([]);
+  
+  // Library integration states
+  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+  const [isListDropdownOpen, setIsListDropdownOpen] = useState(false);
+  const [userLists, setUserLists] = useState([]);
+  const [isAddingToList, setIsAddingToList] = useState(false);
 
   useEffect(() => {
     const fetchFavorites = async () => {
@@ -79,17 +88,34 @@ function DiscoveryPage() {
     fetchFavorites();
   }, [user?.id]);
 
+  // Fetch user's custom lists
+  useEffect(() => {
+    const fetchLists = async () => {
+      if (!user?.id) return;
+      try {
+        const supabase = getSupabase();
+        const { data } = await supabase
+          .from('lists')
+          .select('id, name, description')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        setUserLists(data || []);
+      } catch (err) {
+        console.error('Error fetching lists:', err);
+      }
+    };
+    fetchLists();
+  }, [user?.id]);
+
   const handleMoodSelect = (mood) => {
     setSelectedMood(mood);
     setTempPrompt(mood.prompt);
   };
 
-  // handleChange - ONLY updates local text. NO API calls.
   const handleChange = (e) => {
     setTempPrompt(e.target.value);
   };
 
-  // handleSubmit - ONLY place API call happens
   const handleSubmit = (e) => {
     e.preventDefault();
     if (tempPrompt.trim()) {
@@ -160,6 +186,82 @@ function DiscoveryPage() {
       e.preventDefault();
       handleSubmit(e);
     }
+  };
+
+  // Mark as Watched - Open LogMovieModal
+  const handleMarkAsWatched = () => {
+    if (tmdbData) {
+      setIsLogModalOpen(true);
+    }
+  };
+
+  // Add to Watchlist - Direct Supabase insert
+  const handleAddToWatchlist = async () => {
+    if (!tmdbData || !user?.id) return;
+
+    try {
+      const supabase = getSupabase();
+      const { error } = await supabase
+        .from('movie_logs')
+        .insert({
+          user_id: user.id,
+          tmdb_id: tmdbData.id,
+          title: tmdbData.title,
+          year: tmdbData.release_date?.split('-')[0],
+          poster: tmdbData.poster_path,
+          watch_status: 'to-watch',
+          rating: 0,
+          moods: [],
+          review: ''
+        });
+
+      if (error) throw error;
+
+      toast.success(`"${tmdbData.title}" added to Watchlist`);
+    } catch (err) {
+      console.error('Error adding to watchlist:', err);
+      toast.error('Failed to add to watchlist');
+    }
+  };
+
+  // Add to List - Insert into list_items
+  const handleAddToList = async (listId, listName) => {
+    if (!tmdbData || !user?.id || !listId) return;
+
+    setIsAddingToList(true);
+    setIsListDropdownOpen(false);
+
+    try {
+      const supabase = getSupabase();
+      const { error } = await supabase
+        .from('list_items')
+        .insert({
+          list_id: listId,
+          tmdb_id: tmdbData.id,
+          title: tmdbData.title,
+          poster_path: tmdbData.poster_path
+        });
+
+      if (error) throw error;
+
+      toast.success(`"${tmdbData.title}" added to ${listName}`);
+    } catch (err) {
+      console.error('Error adding to list:', err);
+      toast.error(err.message?.includes('duplicate') ? 'Already in this list' : 'Failed to add to list');
+    } finally {
+      setIsAddingToList(false);
+    }
+  };
+
+  const getMovieDataForModal = () => {
+    if (!tmdbData) return null;
+    return {
+      id: tmdbData.id,
+      title: tmdbData.title,
+      poster_path: tmdbData.poster_path,
+      release_date: tmdbData.release_date,
+      overview: tmdbData.overview
+    };
   };
 
   return (
@@ -259,6 +361,65 @@ function DiscoveryPage() {
                 <p className="rationale-text">{recommendation.rationale}</p>
               </div>
 
+              {/* Library Integration Buttons - Deep Ember Theme */}
+              {tmdbData && (
+                <div className="rec-library-actions">
+                  <button
+                    onClick={handleMarkAsWatched}
+                    className="lib-action-btn"
+                    title="Mark as Watched"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    Mark as Watched
+                  </button>
+
+                  <button
+                    onClick={handleAddToWatchlist}
+                    className="lib-action-btn"
+                    title="Add to Watchlist"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    Add to Watchlist
+                  </button>
+
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsListDropdownOpen(!isListDropdownOpen)}
+                      className="lib-action-btn"
+                      disabled={isAddingToList || userLists.length === 0}
+                      title="Add to List"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                      </svg>
+                      Add to List
+                      {isAddingToList && <span className="loading-spinner spinner-sm"></span>}
+                    </button>
+
+                    {isListDropdownOpen && userLists.length > 0 && (
+                      <div className="list-dropdown">
+                        {userLists.map((list) => (
+                          <button
+                            key={list.id}
+                            onClick={() => handleAddToList(list.id, list.name)}
+                            className="list-dropdown-item"
+                          >
+                            {list.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="rec-actions">
                 {tmdbData?.id && (
                   <a
@@ -302,6 +463,18 @@ function DiscoveryPage() {
           </div>
         )}
       </div>
+
+      {/* Log Movie Modal */}
+      {isLogModalOpen && tmdbData && (
+        <LogMovieModal
+          movie={getMovieDataForModal()}
+          onClose={() => setIsLogModalOpen(false)}
+          onSaved={() => {
+            setIsLogModalOpen(false);
+            toast.success(`"${tmdbData.title}" logged successfully!`);
+          }}
+        />
+      )}
     </div>
   );
 }
