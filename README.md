@@ -183,7 +183,11 @@ See [ROADMAP.md](./ROADMAP.md) for the detailed development plan.
 
 ## 📄 License
 
-MIT License - feel free to use this project for learning or personal use.
+**All Rights Reserved.**
+
+This project is proprietary software. You may not use, copy, modify, distribute, or create derivative works from this software without explicit permission from the author.
+
+For licensing inquiries or permission requests, please contact the project author.
 
 ---
 

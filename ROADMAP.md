@@ -247,6 +247,7 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 | 6.12 | **Bug Report System** | In-app bug reporting with admin dashboard | ✅ |
 | 6.13 | **The Oracle** | Conversational AI Librarian using personal logs | ✅ |
 | 6.14 | **The Matchmaker** | Compare watch-lists & mood overlaps with friends | ⬜ |
+| 6.15 | **High-Speed AI Ensemble** | Groq LPU integration for sub-500ms vibe-to-genre translation | 🏗️ |
 
 ### Deliverables
 - Social media integration for sharing logs
@@ -299,11 +300,72 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 
 ---
 
+## Phase 6.12: Bug Report System (In-App Reporting) 🐛
+
+**Goal**: Enable users to submit bug reports directly from the app with automatic context capture and admin dashboard for triage.
+
+### Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **BugReportModal** | Sleek dark-themed modal for submitting bug reports | ✅ Complete |
+| **ReportBugButton** | Reusable button component (3 variants: button, icon, link) | ✅ Complete |
+| **BugList Admin Dashboard** | Admin-only bug management at `/admin/bugs` | ✅ Complete |
+| **Auto-Capture Context** | Automatically captures page URL and user info on submission | ✅ Complete |
+| **Status Management** | "Mark as Fixed" button, status dropdown, color-coded badges | ✅ Complete |
+| **Version Tracking** | Every bug report includes app version for tracking | ✅ Complete |
+
+### How It Works
+
+1. **User Encounters Bug** - Clicks "Report Bug" button in footer or About page
+2. **Modal Opens** - Pre-filled with user email and current page URL
+3. **User Describes Issue** - Text area for detailed bug description
+4. **Submit to Supabase** - Bug saved to `bug_reports` table with RLS policies
+5. **Admin Reviews** - Admin accesses `/admin/bugs` dashboard (protected by email)
+6. **Triage & Fix** - Admin updates status, tracks fixes across versions
+
+### Technical Requirements
+
+- Supabase `bug_reports` table with RLS policies
+- Admin email protection (`sonofloke@gmail.com` only)
+- Auto-capture page URL and user context
+- Version constant in `src/constants.js`
+- Status management (Open, In Progress, Fixed, Won't Fix)
+- Toast notifications for success/error feedback
+
+### Database Schema
+
+```sql
+-- bug_reports table
+{
+  id: UUID,
+  user_id: UUID,
+  user_email: TEXT,
+  page_url: TEXT,
+  description: TEXT,
+  status: TEXT,              -- 'open' | 'in-progress' | 'fixed' | 'won't-fix'
+  app_version: TEXT,         -- e.g., '1.3.7'
+  created_at: TIMESTAMP,
+  updated_at: TIMESTAMP
+}
+```
+
+### Success Criteria
+
+- [x] Users can submit bug reports from any page
+- [x] Page URL and user info auto-captured
+- [x] Admin dashboard accessible only by admin email
+- [x] Bug status can be updated (Mark as Fixed)
+- [x] Version tracking included in every report
+- [x] Toast notifications provide user feedback
+
+---
+
 ## 🎯 Current Status
 
 **Phase**: Phase 6 In Progress 🚀
 
-**Current Version**: v1.3.6 - Mobile Header Fixed
+**Current Version**: v1.3.7 - Mobile Header Fixed, Oracle Vibe Mapping, Remember Me Toggle
 
 **Completed Features**:
 - ✅ **Mobile-First Responsive Navbar** - Hamburger menu (mobile) / Inline nav links (desktop 768px+)
@@ -452,6 +514,72 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 - [ ] Mood overlap visualizations display clearly
 - [ ] Blind recommendations generate from friend data
 - [ ] Privacy settings control visibility
+
+---
+
+## Phase 6.15: High-Speed AI Ensemble (Groq LPU Integration) 🚀
+
+**Goal**: Transition the Ember Oracle to a multi-model architecture for near-instant response times while maintaining deep reasoning capabilities.
+
+### Overview
+
+| Component | Description | Status |
+|-----------|-------------|--------|
+| **Groq LPU Infrastructure** | Leverage Groq's Language Processing Unit hardware for ultra-low-latency inference | 🏗️ In Planning |
+| **Llama 3 Integration** | Deploy Llama 3 models on Groq for sub-500ms vibe-to-genre translations | 🏗️ In Planning |
+| **Hybrid AI Architecture** | Groq for fast pattern matching + Gemini 1.5 Flash for deep reasoning | 🏗️ In Planning |
+| **Multi-Model Orchestration** | Intelligent routing between Groq (fast) and Gemini (deep) based on query complexity | 🏗️ In Planning |
+
+### Technical Distinction
+
+> **⚠️ Important**: This integration uses **Groq's LPU (Language Processing Unit) hardware infrastructure** — a specialized chip designed for ultra-fast AI inference. This is **not** related to Elon Musk's xAI chatbot (Grok). Groq provides the hardware layer that runs open-source models like Llama 3 at unprecedented speeds.
+
+### How It Works
+
+1. **User Submits Vibe Query** - "I want something dark and mind-bending"
+2. **Groq LPU Processing** - Llama 3 instantly parses natural language → genre IDs
+3. **Latency Target** - Sub-500ms response for vibe-to-genre translation
+4. **Gemini Deep Reasoning** - Complex recommendations still use Gemini 1.5 Flash
+5. **Hybrid Response** - Fast genre mapping + rich cinematic analysis
+
+### Architecture
+
+```
+User Query → Groq LPU (Llama 3) → Genre IDs (sub-500ms)
+           ↓
+    Gemini 1.5 Flash → Deep Analysis + Rationale
+           ↓
+    Ember Oracle UI → Poster + Year + "Why Ignes Picked This"
+```
+
+### Technical Requirements
+
+- Groq API integration (`groq-sdk` or direct REST)
+- Llama 3 model selection and prompt engineering
+- Multi-model orchestration layer (route simple vs. complex queries)
+- Fallback handling (Groq downtime → Gemini-only mode)
+- Latency monitoring and performance metrics
+- Cost optimization (Groq for fast queries, Gemini for deep dives)
+
+### Benefits
+
+| Benefit | Description |
+|---------|-------------|
+| **Speed** | Sub-500ms vibe translation vs. 2-3s with Gemini alone |
+| **Cost Efficiency** | Groq is cheaper for simple pattern matching |
+| **Scalability** | LPU hardware handles high concurrency |
+| **Best of Both Worlds** | Fast responses + deep reasoning when needed |
+| **Future-Proof** | Multi-model architecture allows easy model swaps |
+
+### Success Criteria
+
+- [ ] Groq LPU integration completes successfully
+- [ ] Vibe-to-genre translation achieves sub-500ms latency
+- [ ] Multi-model routing works seamlessly (simple → Groq, complex → Gemini)
+- [ ] Fallback mode functions during Groq downtime
+- [ ] Cost per recommendation decreases by 30%+
+- [ ] User experience remains smooth with hybrid architecture
+- [ ] Clear distinction from xAI/Grok in documentation
 
 ---
 
