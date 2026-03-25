@@ -19,8 +19,7 @@ import AboutPage from './pages/AboutPage';
 import ChangelogPage from './pages/ChangelogPage';
 import BugList from './components/BugList';
 import DiscoveryPage from './pages/DiscoveryPage';
-import SearchBar from './components/SearchBar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 
 console.log('--- APP IS USING THE NEW CODE ---');
@@ -71,15 +70,15 @@ const VIBE_MAP = {
   western: [37],
   music: [10402],
   musical: [10402, 35],
-  
+
   // Custom UI Mood Bubbles → TMDB Genre Arrays
-  'brain mush': [35, 10751],  // Comedy + Family (light, easy watching)
-  'mind-bending': [878, 9648, 53],  // Sci-Fi + Mystery + Thriller
-  'cozy': [10751, 16, 35],  // Family + Animation + Comedy
-  'deep cuts': [18, 99],  // Drama + Documentary (obscure picks)
-  noir: [80, 53],  // Crime + Thriller
-  euphoric: [35, 10749],  // Comedy + Romance
-  'sick day': [16, 10751, 35],  // Animation + Family + Comedy
+  'brain mush': [35, 10751],
+  'mind-bending': [878, 9648, 53],
+  'cozy': [10751, 16, 35],
+  'deep cuts': [18, 99],
+  noir: [80, 53],
+  euphoric: [35, 10749],
+  'sick day': [16, 10751, 35],
 };
 
 // ============================================
@@ -89,7 +88,6 @@ function parseVibe(input) {
   const lowerInput = input.toLowerCase();
   const genres = new Set();
 
-  // First check for exact multi-word matches (priority)
   const multiWordKeys = ['brain mush', 'mind-bending', 'deep cuts', 'sick day', 'sci-fi'];
   multiWordKeys.forEach((key) => {
     if (lowerInput.includes(key)) {
@@ -97,11 +95,8 @@ function parseVibe(input) {
     }
   });
 
-  // Then check single word matches
   Object.keys(VIBE_MAP).forEach((key) => {
-    // Skip multi-word keys we already checked
     if (key.includes(' ') || key.includes('-')) return;
-    
     if (lowerInput.includes(key)) {
       VIBE_MAP[key].forEach((id) => genres.add(id));
     }
@@ -211,12 +206,18 @@ function Header({ onOracleClick }) {
   const { user, isAuthenticated, logout } = useUser();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const handleSearch = (query) => {
-    if (query?.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
-    }
-  };
+  // Debounce search - navigate only after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm.trim()) {
+        navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, navigate]);
 
   const handleLogout = async () => {
     await logout();
@@ -226,7 +227,7 @@ function Header({ onOracleClick }) {
   return (
     <header className="sticky top-0 z-50 h-16 w-full border-b border-white/5 bg-zinc-950/80 backdrop-blur-md">
       <div className="flex h-full max-w-7xl items-center justify-between px-6 mx-auto">
-        
+
         {/* Left: Logo */}
         <Link to="/" className="flex items-center gap-2">
           <IgnesLogo size={28} />
@@ -237,7 +238,7 @@ function Header({ onOracleClick }) {
 
         {/* Right: Nav + Search + Auth (Desktop) */}
         <div className="hidden md:flex items-center gap-6">
-          
+
           {/* Navigation Links */}
           <nav className="flex items-center gap-4">
             <Link to="/discover" className="text-sm font-medium text-orange-500 hover:text-orange-400 transition-colors">
@@ -256,9 +257,24 @@ function Header({ onOracleClick }) {
 
           {/* Right-Side Group: Search + Auth */}
           <div className="flex items-center gap-4 ml-auto">
-            
-            {/* Search Bar */}
-            <SearchBar onSearch={handleSearch} onOpenOracle={onOracleClick} />
+
+            {/* Search Bar - RAW HTML INPUT */}
+            <div className="relative flex items-center w-72">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search..."
+                className="w-full rounded-full border border-white/10 bg-zinc-900/50 py-2 pl-5 pr-12 text-sm text-zinc-200 placeholder-zinc-500 outline-none focus:border-orange-500/50 transition-all"
+              />
+              <button
+                onClick={(e) => { e.preventDefault(); onOracleClick(); }}
+                className="absolute right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white transition-all"
+                title="Ask the Oracle"
+              >
+                <span className="text-sm">✨</span>
+              </button>
+            </div>
 
             {/* Auth Section */}
             {isAuthenticated ? (
@@ -301,12 +317,29 @@ function Header({ onOracleClick }) {
       {isMobileMenuOpen && (
         <div className="md:hidden border-t border-white/5 bg-zinc-950 px-6 py-4">
           <nav className="flex flex-col space-y-4">
-            {/* Full-Width Search Bar */}
-            <SearchBar 
-              onSearch={(q) => { handleSearch(q); setIsMobileMenuOpen(false); }} 
-              onOpenOracle={() => { onOracleClick(); setIsMobileMenuOpen(false); }}
-              fullWidth={true}
-            />
+            {/* Full-Width Search Bar - RAW HTML INPUT */}
+            <div className="relative flex items-center w-full">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  if (e.target.value.trim()) {
+                    navigate(`/search?q=${encodeURIComponent(e.target.value.trim())}`);
+                    setIsMobileMenuOpen(false);
+                  }
+                }}
+                placeholder="Search..."
+                className="w-full rounded-full border border-white/10 bg-zinc-900/50 py-2 pl-5 pr-12 text-sm text-zinc-200 placeholder-zinc-500 outline-none focus:border-orange-500/50 transition-all"
+              />
+              <button
+                onClick={(e) => { e.preventDefault(); onOracleClick(); setIsMobileMenuOpen(false); }}
+                className="absolute right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white transition-all"
+                title="Ask the Oracle"
+              >
+                <span className="text-sm">✨</span>
+              </button>
+            </div>
 
             {/* Navigation Links */}
             <Link
@@ -384,33 +417,27 @@ function AppContent() {
 
   const isAuthPage = ['/login', '/register', '/update-password'].includes(location.pathname);
 
-  // High-IQ Oracle - Maps vibes to genre filters
   const handleOracleSearch = (vibe) => {
     console.log('🔮 Oracle received vibe:', vibe);
 
-    // Parse the vibe into TMDB genre IDs using VIBE_MAP
     const genres = parseVibe(vibe);
     console.log('🎭 Parsed genres:', genres);
 
-    // Build URL with conditional genre parameter
-    // SAFETY: Never append &genres= if array is empty
     let searchUrl = '/search?';
     const params = new URLSearchParams();
 
     if (genres.length > 0) {
-      // Vibe matched - use genre IDs + original query for TMDB Discover
       params.set('genres', genres.join(','));
       params.set('q', vibe);
       console.log('✅ Using DISCOVER mode with genres:', genres.join(','));
     } else {
-      // No match - fall back to TMDB text search only (no genres param)
       params.set('q', vibe);
       console.log('📝 Using TEXT SEARCH mode (no genre match)');
     }
 
     searchUrl += params.toString();
     console.log('🧭 Navigating to:', searchUrl);
-    
+
     navigate(searchUrl);
     setIsOracleOpen(false);
   };

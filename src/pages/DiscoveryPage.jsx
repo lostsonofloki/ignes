@@ -1,33 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
 import { getSupabase } from '../supabaseClient';
 import { discoverMovies } from '../utils/gemini';
 import { fetchTMDBMovie } from '../api/tmdb';
 import './DiscoveryPage.css';
 
-// ============================================
-// DEBOUNCE HOOK - Delays function execution
-// ============================================
-function useDebounce(value, delay) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
-
 const MOOD_PRESETS = [
   { id: 'cozy', label: 'Cozy', icon: '🕯️', prompt: 'A comforting, warm film for a quiet night in' },
   { id: 'adrenaline', label: 'Adrenaline', icon: '🔥', prompt: 'High-octane action that keeps me on the edge of my seat' },
-  { id: 'mind-bending', label: 'Mind-Bending', icon: '🌀', prompt: 'Something that twists reality and makes me think' },
+  { id: 'mind-bending', label: 'Mind-Bending', icon: '🧠', prompt: 'Something that twists reality and makes me think' },
   { id: 'deep-cuts', label: 'Deep Cuts', icon: '💎', prompt: 'Obscure gems that most people have never seen' },
   { id: 'noir', label: 'Noir', icon: '🌑', prompt: 'Dark, atmospheric crime with moral ambiguity' },
   { id: 'euphoric', label: 'Euphoric', icon: '✨', prompt: 'Uplifting cinema that leaves me feeling alive' },
@@ -76,12 +57,8 @@ function DiscoveryPage() {
   const [userFavorites, setUserFavorites] = useState([]);
   const [rejectedIds, setRejectedIds] = useState([]);
   const [rejectedTitles, setRejectedTitles] = useState([]);
-  const inputRef = useRef(null);
 
-  // Debounce custom prompt to prevent firing on every keystroke
-  const debouncedPrompt = useDebounce(customPrompt, 500);
-
-  // Fetch user's top-rated movies for context (FIXED: stable dependency array)
+  // Fetch user's top-rated movies for context
   useEffect(() => {
     const fetchFavorites = async () => {
       if (!user?.id) return;
@@ -103,12 +80,16 @@ function DiscoveryPage() {
     fetchFavorites();
   }, [user?.id]);
 
-  // Auto-discover when debounced prompt changes (not on every keystroke)
+  // Debounced auto-discover when mood preset is selected
   useEffect(() => {
-    if (debouncedPrompt && debouncedPrompt.trim() && selectedMood) {
+    if (!selectedMood || !customPrompt.trim()) return;
+    
+    const timer = setTimeout(() => {
       handleDiscover();
-    }
-  }, [debouncedPrompt]);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [customPrompt, selectedMood]);
 
   const handleMoodSelect = (mood) => {
     setSelectedMood(mood);
@@ -124,21 +105,17 @@ function DiscoveryPage() {
     setTmdbData(null);
 
     try {
-      // Build user context string
       const userContext = userFavorites.length > 0
         ? `User's favorite films: ${userFavorites.map(f => f.title).join(', ')}`
         : 'No favorite films provided';
 
-      // Build rejected movies string
       const allRejectedTitles = [...rejectedTitles, ...additionalRejectedTitles];
       const rejectedContext = allRejectedTitles.length > 0
         ? `\n\nREJECTED MOVIES (DO NOT SUGGEST): ${allRejectedTitles.join(', ')}`
         : '';
 
-      // Build dynamic system prompt with rejected movies
       const systemPrompt = `${BASE_SYSTEM_PROMPT}${rejectedContext}`;
 
-      // Call Gemini AI
       const aiResponse = await discoverMovies({
         mood: customPrompt,
         userContext,
@@ -153,7 +130,6 @@ function DiscoveryPage() {
 
       setRecommendation(aiResponse);
 
-      // Fetch TMDB data for poster and year verification
       const tmdbMovie = await fetchTMDBMovie(aiResponse.title, aiResponse.year?.toString() || '');
       if (tmdbMovie) {
         setTmdbData(tmdbMovie);
@@ -166,22 +142,19 @@ function DiscoveryPage() {
     }
   };
 
-  // Reject & Reroll handler
   const handleRejectAndReroll = async () => {
     if (!tmdbData?.id && !recommendation?.title) return;
 
-    // Add current movie to rejected lists
     const newRejectedIds = tmdbData?.id ? [...rejectedIds, tmdbData.id] : rejectedIds;
     const newRejectedTitles = recommendation?.title ? [...rejectedTitles, recommendation.title] : rejectedTitles;
 
     setRejectedIds(newRejectedIds);
     setRejectedTitles(newRejectedTitles);
 
-    // Re-trigger discovery with updated rejected lists
     await handleDiscover(newRejectedIds, newRejectedTitles);
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleDiscover();
@@ -212,15 +185,14 @@ function DiscoveryPage() {
           ))}
         </div>
 
-        {/* Custom Prompt Input */}
+        {/* Custom Prompt Input - RAW HTML TEXTAREA */}
         <div className="prompt-section">
           <label className="prompt-label">Or describe your vibe:</label>
           <div className="prompt-input-wrapper">
             <textarea
-              ref={inputRef}
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
-              onKeyDown={handleKeyPress}
+              onKeyDown={handleKeyDown}
               placeholder="e.g., 'A sci-fi film that explores loneliness with stunning visuals'"
               className="prompt-input"
               rows={3}
@@ -303,7 +275,7 @@ function DiscoveryPage() {
                     View on TMDB
                   </a>
                 )}
-                
+
                 {/* Reject & Reroll Button - Deep Ember Theme */}
                 <button
                   className="reject-reroll-btn"
