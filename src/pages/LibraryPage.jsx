@@ -1,19 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
+import { useLists } from '../context/ListContext';
 import { getSupabase } from '../supabaseClient';
 import LogMovieModal from '../components/LogMovieModal';
 import MovieCard from '../components/MovieCard';
+import CreateListModal from '../components/CreateListModal';
 import './LibraryPage.css';
 
-// Mood category colors
-const MOOD_COLORS = {
-  emotional: 'mood-warm',
-  vibe: 'mood-cool',
-  intellectual: 'mood-slate',
-};
-
-// Mood categories
 const MOOD_CATEGORIES = {
   bittersweet: 'emotional',
   heartwarming: 'emotional',
@@ -41,21 +35,9 @@ const MOOD_CATEGORIES = {
 };
 
 const GENRES = [
-  'Horror',
-  'Sci-Fi',
-  'Action',
-  'Comedy',
-  'Drama',
-  'Thriller',
-  'Romance',
-  'Fantasy',
-  'Adventure',
-  'Animation',
-  'Crime',
-  'Documentary',
-  'Mystery',
-  'War',
-  'Western',
+  'Horror', 'Sci-Fi', 'Action', 'Comedy', 'Drama', 'Thriller',
+  'Romance', 'Fantasy', 'Adventure', 'Animation', 'Crime',
+  'Documentary', 'Mystery', 'War', 'Western',
 ];
 
 const SORT_OPTIONS = [
@@ -64,12 +46,10 @@ const SORT_OPTIONS = [
   { id: 'rating_high', label: 'Highest Rating' },
 ];
 
-/**
- * LibraryPage - StoryGraph-style library with tabs and rich cards
- */
 function LibraryPage() {
   const { user, isAuthenticated } = useUser();
   const navigate = useNavigate();
+  const { lists, fetchLists, addMovieToList, removeMovieFromList, deleteList } = useLists();
   const [activeTab, setActiveTab] = useState('watched');
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,50 +58,38 @@ function LibraryPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMood, setSelectedMood] = useState('');
-  const [selectedGenre, setSelectedGenre] = useState('');
   const [sortBy, setSortBy] = useState('date_newest');
+  const [showCreateListModal, setShowCreateListModal] = useState(false);
+  const [selectedList, setSelectedList] = useState(null);
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchMovies();
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
     }
-  }, [user, isAuthenticated]);
+    fetchMovies();
+  }, [user?.id, activeTab]);
 
   const fetchMovies = async () => {
+    if (!user?.id) return;
+    setIsLoading(true);
+    setError('');
     try {
-      setIsLoading(true);
       const supabase = getSupabase();
-
-      const { data, error: fetchError } = await supabase
+      const { data, error } = await supabase
         .from('movie_logs')
         .select('*')
         .eq('user_id', user.id)
+        .eq('watch_status', activeTab === 'watched' ? 'watched' : 'to-watch')
         .order('created_at', { ascending: false });
 
-      if (fetchError) throw fetchError;
-
+      if (error) throw error;
       setMovies(data || []);
     } catch (err) {
       console.error('Error fetching movies:', err);
-      setError(err.message);
+      setError('Failed to load your library.');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDelete = async (e, id) => {
-    e.stopPropagation(); // Prevent card click
-    if (!confirm('Delete this movie from your library?')) return;
-
-    try {
-      const supabase = getSupabase();
-      const { error } = await supabase.from('movie_logs').delete().eq('id', id);
-
-      if (error) throw error;
-
-      setMovies(movies.filter(m => m.id !== id));
-    } catch (err) {
-      console.error('Error deleting movie:', err);
     }
   };
 
@@ -131,307 +99,312 @@ function LibraryPage() {
     setShowEditModal(true);
   };
 
-  const handleModalClose = () => {
-    setEditingMovie(null);
-    setShowEditModal(false);
+  const handleDelete = async (e, logId) => {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to delete this log?')) return;
+
+    try {
+      const supabase = getSupabase();
+      const { error } = await supabase
+        .from('movie_logs')
+        .delete()
+        .eq('id', logId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setMovies(movies.filter((m) => m.id !== logId));
+    } catch (err) {
+      console.error('Error deleting:', err);
+      setError('Failed to delete movie log.');
+    }
   };
 
-  const handleModalSaved = (updatedMovie) => {
-    if (editingMovie) {
-      // Update the movie in the local list
-      setMovies(movies.map(m => m.id === updatedMovie.id ? updatedMovie : m));
-    } else {
-      // New movie was added
-      setMovies([updatedMovie, ...movies]);
+  const handleCreateList = async (name, description) => {
+    try {
+      const supabase = getSupabase();
+      const { data, error } = await supabase
+        .from('lists')
+        .insert({
+          user_id: user.id,
+          name,
+          description,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      setShowCreateListModal(false);
+      fetchLists();
+    } catch (err) {
+      console.error('Error creating list:', err);
+      setError('Failed to create list.');
     }
-    setEditingMovie(null);
-    setShowEditModal(false);
   };
 
-  // Filter movies by tab, search query, mood, genre, and sort
-  const filteredMovies = movies.filter(movie => {
-    // First filter by tab
-    const matchesTab = activeTab === 'watched'
-      ? movie.watch_status === 'watched' || !movie.watch_status
-      : movie.watch_status === 'to-watch';
-
-    // Then filter by search query (case-insensitive)
-    const matchesSearch = !searchQuery ||
-      movie.title?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    // Filter by selected mood
-    const matchesMood = !selectedMood ||
-      (movie.moods && movie.moods.includes(selectedMood));
-
-    // Filter by selected genre (case-insensitive)
-    const matchesGenre = !selectedGenre ||
-      (movie.genres && movie.genres.some(g => 
-        g.toLowerCase() === selectedGenre.toLowerCase()
-      ));
-
-    return matchesTab && matchesSearch && matchesMood && matchesGenre;
-  }).sort((a, b) => {
-    // Sort the filtered results
-    if (sortBy === 'date_newest') {
-      return new Date(b.created_at) - new Date(a.created_at);
-    } else if (sortBy === 'date_oldest') {
-      return new Date(a.created_at) - new Date(b.created_at);
-    } else if (sortBy === 'rating_high') {
-      return (b.rating || 0) - (a.rating || 0);
+  const handleDeleteList = async (listId) => {
+    if (!confirm('Delete this list?')) return;
+    try {
+      const supabase = getSupabase();
+      await supabase.from('list_items').delete().eq('list_id', listId);
+      await supabase.from('lists').delete().eq('id', listId);
+      fetchLists();
+    } catch (err) {
+      console.error('Error deleting list:', err);
     }
-    return 0;
+  };
+
+  const handleViewList = (list) => {
+    setSelectedList(list);
+    setActiveTab('lists');
+  };
+
+  const filteredMovies = movies.filter((movie) => {
+    const matchesSearch = movie.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesMood = !selectedMood || (movie.moods && movie.moods.includes(selectedMood));
+    return matchesSearch && matchesMood;
   });
 
-  const watchedCount = movies.filter(m => m.watch_status === 'watched' || !m.watch_status).length;
-  const toWatchCount = movies.filter(m => m.watch_status === 'to-watch').length;
+  const sortedMovies = [...filteredMovies].sort((a, b) => {
+    switch (sortBy) {
+      case 'date_oldest':
+        return new Date(a.created_at) - new Date(b.created_at);
+      case 'rating_high':
+        return (b.rating || 0) - (a.rating || 0);
+      default:
+        return new Date(b.created_at) - new Date(a.created_at);
+    }
+  });
 
-  // Up Next Queue: Top 5 to-watch movies, sorted by created_at descending
-  const upNextQueue = movies
-    .filter(m => m.watch_status === 'to-watch')
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 5);
+  const allMoods = [...new Set(movies.flatMap((m) => m.moods || []))];
 
-  if (!isAuthenticated) {
-    return (
-      <div className="library-page">
-        <div className="library-empty">
-          <h2>Please log in to view your library</h2>
-          <button onClick={() => navigate('/login')} className="login-btn">
-            Log In
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (!isAuthenticated) return null;
 
   return (
     <div className="library-page">
-      <div className="library-header">
-        <div className="library-header-content">
+      <div className="library-container">
+        {/* Header */}
+        <div className="library-header">
           <h1>My Library</h1>
-          <p className="library-count">
-            {watchedCount} watched · {toWatchCount} to watch
-          </p>
+          <button
+            className="create-list-btn"
+            onClick={() => setShowCreateListModal(true)}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Create List
+          </button>
         </div>
 
-        {/* Local Search Input */}
-        <div className="library-search">
-          <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            className="library-search-input"
-            placeholder="Filter your library..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button
-              className="search-clear-btn"
-              onClick={() => setSearchQuery('')}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
-
-        {/* Filter Bar */}
-        <div className="filter-bar">
-          <div className="filter-group">
-            <label htmlFor="mood-filter">Mood</label>
-            <select
-              id="mood-filter"
-              className="filter-select"
-              value={selectedMood}
-              onChange={(e) => setSelectedMood(e.target.value)}
-            >
-              <option value="">All Moods</option>
-              {Object.entries(
-                Object.fromEntries(
-                  Object.entries(MOOD_CATEGORIES).map(([mood, cat]) => [mood, cat])
-                )
-              ).map(([mood]) => (
-                <option key={mood} value={mood}>
-                  {mood.charAt(0).toUpperCase() + mood.slice(1).replace('-', ' ')}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="genre-filter">Genre</label>
-            <select
-              id="genre-filter"
-              className="filter-select"
-              value={selectedGenre}
-              onChange={(e) => setSelectedGenre(e.target.value)}
-            >
-              <option value="">All Genres</option>
-              {GENRES.map((genre) => (
-                <option key={genre} value={genre}>
-                  {genre}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="sort-filter">Sort By</label>
-            <select
-              id="sort-filter"
-              className="filter-select"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Library Tabs */}
+        {/* Tabs */}
         <div className="library-tabs">
           <button
-            className={`library-tab ${activeTab === 'watched' ? 'active' : ''}`}
-            onClick={() => setActiveTab('watched')}
+            className={`tab ${activeTab === 'watched' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('watched'); setSelectedList(null); }}
           >
             Watched
-            <span className="tab-count">{watchedCount}</span>
           </button>
           <button
-            className={`library-tab ${activeTab === 'to-watch' ? 'active' : ''}`}
-            onClick={() => setActiveTab('to-watch')}
+            className={`tab ${activeTab === 'to-watch' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('to-watch'); setSelectedList(null); }}
           >
             Want to Watch
-            <span className="tab-count">{toWatchCount}</span>
+          </button>
+          <button
+            className={`tab ${activeTab === 'lists' ? 'active' : ''}`}
+            onClick={() => setActiveTab('lists')}
+          >
+            My Lists ({lists.length})
           </button>
         </div>
-      </div>
 
-      {isLoading ? (
-        <div className="loading-state">
-          <div className="loading-spinner"></div>
-          <p>Loading your library...</p>
-        </div>
-      ) : error ? (
-        <div className="error-state">
-          <p>Error loading movies: {error}</p>
-        </div>
-      ) : filteredMovies.length === 0 ? (
-        <div className="library-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <path d="M21 15l-5-5L5 21" />
-          </svg>
-          <h2>
-            {activeTab === 'watched' 
-              ? 'No watched movies yet' 
-              : 'No movies in your watchlist'}
-          </h2>
-          <p>
-            {activeTab === 'watched'
-              ? 'Start logging movies you have watched!'
-              : 'Add movies you want to watch!'}
-          </p>
-          <button onClick={() => navigate('/')} className="browse-btn">
-            {activeTab === 'watched' ? 'Browse Movies' : 'Find Movies'}
-          </button>
-        </div>
-      ) : (
-        <>
-          {/* Up Next Queue - Only show on Want to Watch tab */}
-          {activeTab === 'to-watch' && (
-            <div className="up-next-section">
-              <div className="up-next-header">
-                <div className="up-next-label">
-                  <span className="up-next-dot"></span>
-                  Next Up
+        {/* Lists View */}
+        {activeTab === 'lists' && (
+          <div className="lists-view">
+            {selectedList ? (
+              <div className="list-detail">
+                <div className="list-detail-header">
+                  <button
+                    className="back-to-lists"
+                    onClick={() => setSelectedList(null)}
+                  >
+                    ← Back to Lists
+                  </button>
+                  <h2>{selectedList.name}</h2>
+                  <button
+                    className="delete-list-btn"
+                    onClick={() => handleDeleteList(selectedList.id)}
+                  >
+                    Delete List
+                  </button>
                 </div>
-                {upNextQueue.length === 0 && (
-                  <p className="up-next-empty-hint">
-                    Your queue is empty. Use Power Search to bank some movies!
-                  </p>
+                {selectedList.description && (
+                  <p className="text-sm text-zinc-500 mb-6">{selectedList.description}</p>
                 )}
-              </div>
-              {upNextQueue.length > 0 && (
-                <div className="up-next-shelf">
-                  {upNextQueue.map((movie) => (
-                    <div
-                      key={movie.id}
-                      className="up-next-card"
-                      onClick={() => movie.tmdb_id && navigate(`/movie/${movie.tmdb_id}`)}
-                    >
-                      <div className="up-next-poster">
-                        {movie.poster ? (
-                          <img src={movie.poster} alt={movie.title} />
-                        ) : (
-                          <div className="no-poster">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                              <rect x="3" y="3" width="18" height="18" rx="2" />
-                              <circle cx="8.5" cy="8.5" r="1.5" />
-                              <path d="M21 15l-5-5L5 21" />
-                            </svg>
-                          </div>
-                        )}
-                        {/* Add to List Button Overlay */}
-                        <div className="up-next-actions" onClick={(e) => e.stopPropagation()}>
-                          <AddToListButton 
-                            movie={{ 
-                              tmdb_id: movie.tmdb_id, 
-                              title: movie.title, 
-                              poster_path: movie.poster?.replace('https://image.tmdb.org/t/p/w500', '') 
-                            }} 
-                            className="add-to-list-up-next"
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {selectedList.list_items && selectedList.list_items.length > 0 ? (
+                    selectedList.list_items.map((item) => (
+                      <div key={item.id} className="group relative">
+                        <div className="aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900">
+                          <img
+                            src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                            alt={item.title}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                         </div>
+                        <div className="mt-2">
+                          <p className="text-xs font-medium text-zinc-300 line-clamp-1 group-hover:text-orange-500 transition-colors">
+                            {item.title}
+                          </p>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 rounded-lg">
+                          <button
+                            className="px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded hover:bg-red-700 transition-colors"
+                            onClick={() => removeMovieFromList(selectedList.id, item.tmdb_id)}
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
-                      <div className="up-next-info">
-                        <h3 className="up-next-title-text">{movie.title}</h3>
-                        <p className="up-next-year">{movie.year}</p>
-                        {movie.rating && (
-                          <div className="up-next-rating">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg>
-                            {movie.rating.toFixed(1)}
-                          </div>
-                        )}
+                    ))
+                  ) : (
+                    <p className="col-span-full text-center text-zinc-500 py-12">This list is empty.</p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="lists-grid">
+                {lists.length > 0 ? (
+                  lists.map((list) => (
+                    <div key={list.id} className="list-card">
+                      <div className="list-card-header">
+                        <h3>{list.name}</h3>
+                        <span className="item-count">
+                          {list.list_items?.length || 0} movies
+                        </span>
+                      </div>
+                      {list.description && (
+                        <p className="list-card-description">{list.description}</p>
+                      )}
+                      <div className="list-card-posters">
+                        {list.list_items?.slice(0, 4).map((item) => (
+                          <img
+                            key={item.id}
+                            src={`https://image.tmdb.org/t/p/w92${item.poster_path}`}
+                            alt={item.title}
+                          />
+                        ))}
+                      </div>
+                      <div className="list-card-actions">
+                        <button
+                          className="view-list-btn"
+                          onClick={() => handleViewList(list)}
+                        >
+                          View List
+                        </button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="library-grid gap-8">
-            {filteredMovies.map((movie) => (
-              <MovieCard
-                key={movie.id}
-                movie={movie}
-                isLibraryCard={true}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            ))}
+                  ))
+                ) : (
+                  <div className="no-lists">
+                    <h3>No lists yet</h3>
+                    <p>Create your first custom list to organize your movies.</p>
+                    <button
+                      className="create-first-list"
+                      onClick={() => setShowCreateListModal(true)}
+                    >
+                      Create List
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </>
-      )}
+        )}
 
-      {showEditModal && (
+        {/* Movies View */}
+        {activeTab !== 'lists' && (
+          <>
+            {/* Filters */}
+            <div className="library-filters">
+              <input
+                type="text"
+                placeholder="Search your library..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+              {allMoods.length > 0 && (
+                <select
+                  value={selectedMood}
+                  onChange={(e) => setSelectedMood(e.target.value)}
+                  className="mood-filter"
+                >
+                  <option value="">All Moods</option>
+                  {allMoods.map((mood) => (
+                    <option key={mood} value={mood}>
+                      {mood.charAt(0).toUpperCase() + mood.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="sort-select"
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Movie Grid */}
+            {isLoading ? (
+              <div className="loading">Loading your library...</div>
+            ) : error ? (
+              <div className="error">{error}</div>
+            ) : sortedMovies.length === 0 ? (
+              <div className="empty-state">
+                <p>No movies found. Start logging!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {sortedMovies.map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    movie={movie}
+                    isLibraryCard={true}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Edit Modal */}
+      {showEditModal && editingMovie && (
         <LogMovieModal
           movie={editingMovie}
           existingLog={editingMovie}
-          onClose={handleModalClose}
-          onSaved={handleModalSaved}
+          onClose={() => setShowEditModal(false)}
+          onSaved={(updated) => {
+            setMovies(movies.map((m) => (m.id === updated.id ? updated : m)));
+            setShowEditModal(false);
+          }}
+        />
+      )}
+
+      {/* Create List Modal */}
+      {showCreateListModal && (
+        <CreateListModal
+          onClose={() => setShowCreateListModal(false)}
+          onCreateList={handleCreateList}
         />
       )}
     </div>

@@ -1,8 +1,8 @@
 # 🎬 Ignes
 
-**Your Personal Movie Logging & Visualization Platform**
+**Your Personal Movie Logging & AI Discovery Platform**
 
-Ignes is a React-based web application that lets you log, track, and visualize your movie-watching journey. Unlike traditional platforms like Letterboxd, Ignes focuses on the emotional and statistical side of your viewing habits with mood tracking, precision ratings, and smart recommendations.
+Ignes is a React-based web application that lets you log, track, and visualize your movie-watching journey. Unlike traditional platforms like Letterboxd, Ignes focuses on emotional tracking, AI-powered discovery, and deep cinematic insights with the **Ember Oracle** — your personal film curator.
 
 ---
 
@@ -15,6 +15,7 @@ Ignes is a React-based web application that lets you log, track, and visualize y
 - **Rotten Tomatoes Scores**: See critic scores fetched from OMDb API
 - **Personal Reviews**: Log movies with ratings, moods, reviews, and watch status
 - **My Library**: StoryGraph-style library with Watched/Want to Watch tabs and rich movie cards
+- **Custom Lists**: Create and manage personalized movie collections
 - **Edit Reviews**: Click "Edit Log" to update your existing movie reviews
 - **Mood Palette**: Tag movies with 22 moods across 3 categories (Emotional, Vibe, Intellectual)
 - **Precision Rating Slider**: StoryGraph-style 0.0-5.0 rating with 0.1 increments
@@ -23,17 +24,23 @@ Ignes is a React-based web application that lets you log, track, and visualize y
 - **Actor Pages**: Actor bios, photos, and top movies sorted by popularity
 - **Stats Dashboard**: Visualize your watching habits with Top Genres, Mood Breakdown, and Ratings Distribution charts
 
+### 🤖 AI Features (Ember Oracle)
+- **Ember Oracle**: AI-powered film discovery with natural language vibe search
+- **Mood Bubbles**: 6 quick-select presets (Cozy, Adrenaline, Mind-Bending, Deep Cuts, Noir, Euphoric)
+- **Reject & Reroll**: Reject unwanted suggestions and get instant alternatives
+- **Deep Cut Recommendations**: AI prioritizes obscure gems over mainstream blockbusters
+- **Rationale Display**: "Why Ignes Picked This" with specific cinematic analysis
+- **Vibe Check Tagline**: 5-7 word punchy essence descriptions
+- **Session Tracking**: Tracks rejected movies to avoid repeat suggestions
+
 ### Advanced Features
 - **Mobile-First Responsive Navbar**: Hamburger menu (mobile) / Inline nav links (desktop 768px+)
-  - **Desktop View**: Logo | Trending, My Library, History | Search Bar
-  - **Mobile View**: Logo + Hamburger → Dropdown with search at top
-- **Stats Dashboard**: Visualize your watching habits with charts (most-watched moods, genres, years)
-  - **Smart Data Filtering**: Analytics automatically exclude watchlist items to provide an accurate "Watched" history
-- **Up Next Queue**: Maintain a curated shelf of your next 5 movies to watch
-- **AI Discovery**: Get personalized movie recommendations powered by Gemini AI
+  - **Desktop View**: Logo | Discover, Trending, Library, History | Search + Profile
+  - **Mobile View**: Logo + Hamburger → Full-width dropdown with search + nav
 - **Watch History Timeline**: Vertical timeline of watched movies grouped by month
-- **Smart Recommendations**: Discover new movies based on your viewing history and preferences
+- **Up Next Queue**: Maintain a curated shelf of your next 5 movies to watch
 - **User Authentication**: Secure login/signup with Supabase Auth
+- **Remember Me**: Toggle between persistent (localStorage) and session-only (sessionStorage) login
 - **Forgot Password Flow**: Email-based password reset with Supabase Auth
 - **Editable Profiles**: Customizable display names and bios with avatar upload
 - **Row Level Security**: Secure data policies protecting user movie logs
@@ -154,14 +161,23 @@ Double-click `launch.bat` to start the dev server and open the app automatically
 
 See [ROADMAP.md](./ROADMAP.md) for the detailed development plan.
 
-### Current Status: Phase 5 Complete ✅
+### Current Status: Phase 6 In Progress 🚀
 
-**Phase 5: AI Integration** is now live with:
+**Phase 5: AI Integration** is complete with:
 - ✅ Gemini AI-powered recommendations
 - ✅ Privacy-first opt-in toggle
 - ✅ Banished list (never suggest rejected movies again)
 - ✅ Library integration (Add to Watchlist / Mark as Watched)
 - ✅ TMDB verification for all AI suggestions
+
+**Phase 6: Ember Oracle & Social** is underway:
+- ✅ **Ember Oracle** (v1.3.2) - Conversational AI with natural language vibe search
+- ✅ **Mood Bubbles** - 6 quick-select presets for instant discovery
+- ✅ **Reject & Reroll** (v1.3.5) - Reject suggestions and get alternatives
+- ✅ **Custom Lists** (v1.3.1) - User-created movie collections
+- ✅ **Remember Me** (v1.3.3) - Dynamic storage persistence toggle
+- ⬜ **The Matchmaker** - Social compatibility with mood overlaps
+- ⬜ **Social Sharing** - Share movie logs to social media
 
 ---
 

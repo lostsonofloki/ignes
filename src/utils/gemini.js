@@ -243,3 +243,54 @@ Return JSON with these exact keys:
     return null;
   }
 };
+
+/**
+ * Ember Oracle - AI-powered single movie discovery with deep cuts
+ * @param {Object} params - Parameters object
+ * @param {string} params.mood - User's current mood or vibe description
+ * @param {string} params.userContext - User's favorite films for context
+ * @param {string} params.systemPrompt - Custom system prompt for the Oracle
+ * @returns {Promise<Object>} - Single movie recommendation with rationale
+ */
+export const discoverMovies = async ({
+  mood,
+  userContext,
+  systemPrompt,
+}) => {
+  const model = genAI.getGenerativeModel({
+    model: MODEL_NAME,
+    generationConfig: {
+      temperature: 0.9,
+      maxOutputTokens: 500,
+      responseMimeType: 'application/json',
+    },
+  });
+
+  const prompt = `${systemPrompt}
+
+USER CONTEXT:
+${userContext}
+
+CURRENT MOOD/REQUEST:
+"${mood}"
+
+Return ONLY valid JSON. NO text before or after. NO markdown formatting.
+
+Format:
+{"title":"Exact Movie Title","year":2023,"rationale":"2-3 sentences explaining why this matches their mood","vibeCheck":"5-7 word punchy tagline"}`;
+
+  try {
+    const result = await model.generateContentStream(prompt);
+    const chunks = [];
+    for await (const chunk of result.stream) {
+      chunks.push(chunk.text());
+    }
+
+    const responseText = chunks.join('');
+    const cleanJson = responseText.replace(/```json\s*|\s*```/g, '').trim();
+    return JSON.parse(cleanJson);
+  } catch (error) {
+    console.error('Error in Ember Oracle discovery:', error);
+    throw new Error('The Oracle is silent. Please try again.');
+  }
+};

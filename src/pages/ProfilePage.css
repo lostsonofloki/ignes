@@ -983,6 +983,19 @@
   width: 100%;
 }
 
+/* Legend wrapping for mobile */
+.recharts-legend-wrapper {
+  max-width: 100%;
+  padding: 0 10px;
+}
+
+.recharts-default-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
 /* Total Watched Card */
 .total-watched-card {
   text-align: center;

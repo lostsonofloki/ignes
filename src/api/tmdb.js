@@ -188,3 +188,48 @@ export const getProfileUrl = (path, size = 'w185') => {
   if (!path) return null;
   return `${IMAGE_BASE_URL}/${size}${path}`;
 };
+
+/**
+ * Fetch movie details from TMDB by title and year
+ * @param {string} title - Movie title
+ * @param {string} year - Release year (optional)
+ * @returns {Promise<Object|null>} - Movie data with poster_path and release_date
+ */
+export const fetchTMDBMovie = async (title, year = '') => {
+  const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+
+  if (!TMDB_API_KEY) {
+    console.error('TMDB API key missing');
+    return null;
+  }
+
+  try {
+    const searchQuery = encodeURIComponent(title);
+    const yearParam = year && year !== 'N/A' ? `&primary_release_year=${year}` : '';
+
+    const response = await fetch(
+      `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${searchQuery}${yearParam}`
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        const movie = data.results[0];
+        return {
+          id: movie.id,
+          title: movie.title,
+          release_date: movie.release_date,
+          poster_path: movie.poster_path,
+          backdrop_path: movie.backdrop_path,
+          overview: movie.overview,
+          vote_average: movie.vote_average,
+        };
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error fetching TMDB data for "${title}":`, error.message);
+    return null;
+  }
+};

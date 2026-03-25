@@ -1,0 +1,375 @@
+.oracle-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 80px 20px 20px;
+  animation: overlayFadeIn 0.2s ease-out;
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.oracle-modal {
+  position: relative;
+  width: 100%;
+  max-width: 650px;
+  background: linear-gradient(180deg, rgba(24, 24, 27, 0.98) 0%, rgba(12, 12, 12, 0.98) 100%);
+  border: 1px solid rgba(63, 63, 70, 0.5);
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8),
+              0 0 0 1px rgba(249, 168, 75, 0.1);
+  overflow: hidden;
+  animation: modalSlideDown 0.3s ease-out;
+}
+
+@keyframes modalSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
+.oracle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  border-bottom: 1px solid rgba(63, 63, 70, 0.3);
+  background: rgba(249, 168, 75, 0.03);
+}
+
+.oracle-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.oracle-sparkle {
+  width: 32px;
+  height: 32px;
+  color: #f9a84b;
+  animation: sparkle 3s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2) rotate(180deg);
+  }
+}
+
+.oracle-title h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  background: linear-gradient(135deg, #f9a84b 0%, #ea580c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.oracle-subtitle {
+  font-size: 13px;
+  color: #71717a;
+  margin: 4px 0 0 0;
+  font-weight: 400;
+}
+
+.oracle-close {
+  background: rgba(63, 63, 70, 0.3);
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.oracle-close:hover {
+  background: rgba(82, 82, 91, 0.5);
+}
+
+.oracle-close svg {
+  width: 20px;
+  height: 20px;
+  color: #a1a1aa;
+}
+
+.oracle-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Form */
+.oracle-form {
+  padding: 24px;
+}
+
+.oracle-greeting {
+  margin-bottom: 20px;
+}
+
+.oracle-greeting p {
+  font-size: 16px;
+  color: #d4d4d8;
+  margin: 0;
+}
+
+.oracle-greeting .highlight {
+  color: #f9a84b;
+  font-weight: 600;
+}
+
+.oracle-input-wrapper {
+  margin-bottom: 16px;
+}
+
+.oracle-input {
+  width: 100%;
+  padding: 16px 20px;
+  background: rgba(24, 24, 27, 0.8);
+  border: 1px solid rgba(63, 63, 70, 0.5);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 16px;
+  font-family: inherit;
+  resize: none;
+  transition: all 0.3s ease;
+  outline: none;
+  box-sizing: border-box;
+  min-height: 80px;
+}
+
+.oracle-input:focus {
+  background: rgba(24, 24, 27, 0.95);
+  border-color: rgba(249, 168, 75, 0.5);
+  box-shadow: 0 0 0 3px rgba(249, 168, 75, 0.1);
+}
+
+.oracle-input::placeholder {
+  color: #71717a;
+  font-style: italic;
+}
+
+.oracle-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Quick Mood Chips */
+.quick-moods-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.quick-mood-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(63, 63, 70, 0.25);
+  border: 1px solid rgba(82, 82, 91, 0.3);
+  border-radius: 10px;
+  color: #a1a1aa;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.quick-mood-chip:hover {
+  background: rgba(63, 63, 70, 0.4);
+  border-color: rgba(249, 168, 75, 0.3);
+  color: #f9a84b;
+  transform: translateY(-1px);
+}
+
+.mood-emoji {
+  font-size: 18px;
+}
+
+.mood-label {
+  font-weight: 500;
+}
+
+.oracle-hints {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #71717a;
+}
+
+.hint {
+  font-style: italic;
+}
+
+.hint-separator {
+  color: #3f3f46;
+}
+
+/* Actions */
+.oracle-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid rgba(63, 63, 70, 0.3);
+}
+
+.oracle-version {
+  font-size: 12px;
+  color: #525252;
+  font-weight: 500;
+}
+
+.oracle-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #f9a84b 0%, #ea580c 100%);
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.oracle-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(249, 168, 75, 0.3);
+  background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+}
+
+.oracle-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.submit-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.submit-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Tips */
+.oracle-tips {
+  padding: 20px 24px;
+  background: rgba(249, 168, 75, 0.02);
+  border-top: 1px solid rgba(63, 63, 70, 0.2);
+}
+
+.tip-label {
+  font-size: 13px;
+  color: #a1a1aa;
+  margin: 0 0 12px 0;
+  font-weight: 500;
+}
+
+.tip-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.tip-item {
+  font-size: 13px;
+  color: #71717a;
+  padding: 8px 12px;
+  background: rgba(63, 63, 70, 0.2);
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.tip-item:hover {
+  background: rgba(63, 63, 70, 0.3);
+  color: #a1a1aa;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .oracle-overlay {
+    padding: 60px 16px 16px;
+  }
+
+  .oracle-modal {
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+
+  .oracle-header {
+    padding: 20px;
+  }
+
+  .oracle-form {
+    padding: 20px;
+  }
+
+  .oracle-actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+
+  .oracle-submit {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .oracle-hints {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .quick-moods-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tip-grid {
+    grid-template-columns: 1fr;
+  }
+}

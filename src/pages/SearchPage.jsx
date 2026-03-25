@@ -52,14 +52,42 @@ function SearchPage() {
   const [selectedYear, setSelectedYear] = useState('');
 
   const initialQuery = searchParams.get('q') || '';
+  const initialGenres = searchParams.get('genres') || '';
 
   // Handle search when URL query changes
   useEffect(() => {
+    // If genres param exists, use discover mode with those genres
+    if (initialGenres) {
+      const genreIds = initialGenres.split(',');
+      setSelectedGenre(genreIds[0]); // Use first genre for discover
+      setLastQuery(initialQuery);
+      // Trigger discover search with the genre
+      setTimeout(() => {
+        setIsLoading(true);
+        setHasSearched(true);
+        setSearchMode('discover');
+        discoverMovies(genreIds[0], sortBy, selectedYear || CURRENT_YEAR.toString())
+          .then(results => {
+            const mappedMovies = results.map(movie => ({
+              Title: movie.title,
+              Year: movie.release_date?.split('-')[0] || 'N/A',
+              imdbID: movie.id,
+              Poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
+              tmdb_id: movie.id,
+            }));
+            setMovies(mappedMovies);
+          })
+          .catch(() => setMovies([]))
+          .finally(() => setIsLoading(false));
+      }, 0);
+      return;
+    }
+    
     if (initialQuery && initialQuery !== lastQuery) {
       setLastQuery(initialQuery);
       handleSearch(initialQuery);
     }
-  }, [initialQuery]);
+  }, [initialQuery, initialGenres]);
 
   // Handle discover mode when filters change
   useEffect(() => {

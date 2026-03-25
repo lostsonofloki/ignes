@@ -245,7 +245,7 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 | 6.10 | **Advanced Search** | Multi-criteria search (Mood, Genre, Rating) | ⬜ |
 | 6.11 | **The Archive Importer** | Mass import tool for migrating movie lists | ⬜ |
 | 6.12 | **Bug Report System** | In-app bug reporting with admin dashboard | ✅ |
-| 6.13 | **The Oracle** | Conversational AI Librarian using personal logs | ⬜ |
+| 6.13 | **The Oracle** | Conversational AI Librarian using personal logs | ✅ |
 | 6.14 | **The Matchmaker** | Compare watch-lists & mood overlaps with friends | ⬜ |
 
 ### Deliverables
@@ -301,14 +301,14 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 
 ## 🎯 Current Status
 
-**Phase**: Phase 5 Complete ✅ | Phase 6: Future Enhancements (In Progress)
+**Phase**: Phase 6 In Progress 🚀
 
-**Current Version**: v1.3.0 - Cinematic UI Overhaul & AI Personality
+**Current Version**: v1.3.6 - Mobile Header Fixed
 
 **Completed Features**:
 - ✅ **Mobile-First Responsive Navbar** - Hamburger menu (mobile) / Inline nav links (desktop 768px+)
-  - Desktop: Logo | Trending, My Library, History | Search Bar
-  - Mobile: Logo + Hamburger → Dropdown with search at top
+  - Desktop: Logo | Discover, Trending, Library, History | Search + Profile
+  - Mobile: Logo + Hamburger → Full-width dropdown with search + nav
 - ✅ **Minimalist Dark Theme** - #0a0a0a background, clean typography
 - ✅ **TMDB/OMDb Dual-API** - Trending movies, search, details, RT scores
 - ✅ **Movie Detail Pages** - High-res backdrops, cast, recommendations, TMDB + RT scores
@@ -318,6 +318,7 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 - ✅ **Edit Movie Logs** - "Edit Log" button on MovieDetail opens modal pre-filled with your data
 - ✅ **Supabase Backend** - Auth, PostgreSQL, RLS policies configured (includes genres column)
 - ✅ **User Authentication** - Sign up, login, logout with Supabase Auth
+- ✅ **Remember Me Checkbox** (v1.3.3) - Toggle between localStorage/sessionStorage persistence
 - ✅ **Forgot Password Flow** - Email-based password reset with Supabase Auth
 - ✅ **RatingSlider** - StoryGraph-style 0.0-5.0 with 0.1 increments, gradient fill
 - ✅ **Mood Palette** - 22 moods across 3 color-coded categories:
@@ -327,6 +328,7 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 - ✅ **LogMovieModal** - Full logging form with rating, moods, review, watch status, genres (with React Portals)
 - ✅ **My Library** - StoryGraph-style tabs (Watched/Want to Watch), rich movie cards with Edit/Delete buttons
 - ✅ **Library Search Filter** - Filter your library by title, mood, genre; sort by rating/date
+- ✅ **Custom Lists** (v1.3.1) - Create, view, and manage personal movie collections
 - ✅ **Clickable Movie Cards** - Search results and library cards navigate to MovieDetail on click
 - ✅ **Hover Effects** - Cards scale and show shadow on hover for visual feedback
 - ✅ **Editable Profiles** - Display name, bio, avatar with integrated Movie Insights
@@ -341,27 +343,34 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 - ✅ **Creepy Footer Styling** - Creepster font with blood red glow effect
 - ✅ **Stats Dashboard** - Recharts-based analytics with genre, mood, and rating visualizations
 - ✅ **Components Demo Page** - Showcase of all UI components for testing and development
-- ✅ **Custom Lists** (v1.1.0) - User-created movie collections with toast notifications
-- ✅ **Tailwind CSS** (v1.2.0) - Full utility-first CSS framework with Deep Ember theme
 - ✅ **About/Roadmap Page** (v1.2.0) - Ignes Hub with changelog and roadmap
 - ✅ **Bug Report System** (v1.2.0) - In-app bug reporting with admin dashboard
 - ✅ **Cinematic MovieCard** (v1.3.0) - StoryGraph-inspired clean bookshelf design with hover overlays
 - ✅ **Version Management** (v1.3.0) - Centralized constants with auto-version in bug reports
+- ✅ **Oracle Vibe Mapping** (v1.3.4) - Natural language to TMDB genre ID mapping
+- ✅ **Library Grid Responsive** (v1.3.1) - `grid-cols-2 md:grid-cols-4 lg:grid-cols-6`
 
-**Phase 5 Complete - AI Integration**:
-- ✅ **Gemini AI** - Google AI integration for personalized recommendations
-- ✅ **AI Discovery Toggle** - Privacy-first opt-in with purple accent toggle
-- ✅ **Smart Recommendations** - AI-curated movie recommendations with TMDB IDs
-- ✅ **Mood Pattern Analysis** - AI curator insights about user's viewing patterns
-- ✅ **Feedback Loop** - Thumbs up/down with instant fade-out animation
-- ✅ **Banished List** - AI remembers rejected movies and won't suggest them again
-- ✅ **Library Integration** - Add to Watchlist / Mark as Watched buttons on recommendations
-- ✅ **LogMovieModal Integration** - Click "Watched" to open rating modal pre-filled
+**🤖 Ember Oracle - AI Discovery (v1.3.2+)**:
+- ✅ **Ember Oracle Page** (`/discover`) - Dedicated AI discovery interface
+- ✅ **Mood Bubbles** - 6 quick-select presets (Cozy, Adrenaline, Mind-Bending, Deep Cuts, Noir, Euphoric)
+- ✅ **Natural Language Input** - "A dark comedy for a rainy night"
+- ✅ **Rationale Display** - "Why Ignes Picked This" with cinematic analysis
+- ✅ **Vibe Check Tagline** - 5-7 word punchy descriptions
+- ✅ **TMDB Integration** - Auto-fetch posters and release years
+- ✅ **Reject & Reroll** (v1.3.5) - Reject suggestions and get instant alternatives
+- ✅ **Session Tracking** - Badge shows rejected movies count
+- ✅ **Dynamic System Prompt** - AI avoids rejected movies during session
+- ✅ **Deep Ember Theme** - Dark zinc backgrounds with amber/orange accents
 - ✅ **Database Schema** - recommendation_feedback table with RLS policies
 
 **Phase 6 Planned - AI Personality & Social**:
-- ⬜ **The Oracle** (v1.3.0) - Conversational AI Librarian with personality
-- ⬜ **The Matchmaker** (v1.3.0) - Social compatibility with mood overlaps
+- ✅ **The Oracle** (v1.3.2-v1.3.6) - Conversational AI Librarian with natural language vibe search
+  - ✅ Ember Oracle page (`/discover`) with mood bubbles
+  - ✅ Natural language input with rationale display
+  - ✅ Reject & Reroll (v1.3.5)
+  - ✅ Session tracking with rejected movies count
+  - ✅ TMDB integration for posters and years
+- ⬜ **The Matchmaker** - Social compatibility with mood overlaps
 
 ---
 

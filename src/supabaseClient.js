@@ -28,20 +28,41 @@ if (supabaseAnonKey) {
 
 console.log('================================');
 
+// Custom storage wrapper for dynamic persistence (localStorage vs sessionStorage)
+class SupabaseStorageAdapter {
+  constructor(useLocalStorage = true) {
+    this.storage = useLocalStorage ? window.localStorage : window.sessionStorage;
+  }
+
+  getItem(key) {
+    return this.storage.getItem(key);
+  }
+
+  setItem(key, value) {
+    this.storage.setItem(key, value);
+  }
+
+  removeItem(key) {
+    this.storage.removeItem(key);
+  }
+}
+
 // Validate configuration
 let supabase;
 
 if (supabaseUrl && supabaseAnonKey) {
   try {
+    // Default to localStorage (persist across browser closes)
     supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: true,
+        storage: new SupabaseStorageAdapter(true), // Default: localStorage
       },
     });
     console.log('✅ Supabase client initialized successfully');
-    
+
     // Test the connection
     supabase.auth.getSession().then(({ error }) => {
       if (error) {
@@ -68,6 +89,22 @@ export const getSupabase = () => {
     throw new Error(errorMsg);
   }
   return supabase;
+};
+
+// Export function to create client with custom storage (for Remember Me toggle)
+export const createSupabaseWithStorage = (useLocalStorage = true) => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase configuration missing');
+  }
+  
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      storage: new SupabaseStorageAdapter(useLocalStorage),
+    },
+  });
 };
 
 // Export the client directly for convenience (may be undefined if not configured)

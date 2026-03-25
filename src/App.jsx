@@ -17,121 +17,428 @@ import ActorPage from './pages/ActorPage';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import AboutPage from './pages/AboutPage';
 import BugList from './components/BugList';
+import DiscoveryPage from './pages/DiscoveryPage';
 import { useState } from 'react';
 import './App.css';
 
-function Header() {
+console.log('--- APP IS USING THE NEW CODE ---');
+
+// ============================================
+// VIBE MAP - Maps natural language to TMDB genre IDs
+// ============================================
+const VIBE_MAP = {
+  // Basic genres
+  dark: [80, 53],
+  comedy: [35],
+  funny: [35],
+  hilarious: [35],
+  scary: [27],
+  horror: [27],
+  terrifying: [27],
+  spooky: [27],
+  action: [28],
+  adrenaline: [28],
+  explosive: [28],
+  'sci-fi': [878],
+  science: [878],
+  space: [878],
+  futuristic: [878],
+  alien: [878],
+  romance: [10749],
+  love: [10749],
+  romantic: [10749],
+  drama: [18],
+  emotional: [18],
+  sad: [18],
+  thriller: [53],
+  suspense: [53],
+  tense: [53],
+  mystery: [9648],
+  crime: [80],
+  detective: [80],
+  fantasy: [14],
+  magic: [14],
+  adventure: [12],
+  epic: [12],
+  animation: [16],
+  animated: [16],
+  family: [10751],
+  kids: [10751],
+  documentary: [99],
+  war: [10752],
+  western: [37],
+  music: [10402],
+  musical: [10402, 35],
+  
+  // Custom UI Mood Bubbles → TMDB Genre Arrays
+  'brain mush': [35, 10751],  // Comedy + Family (light, easy watching)
+  'mind-bending': [878, 9648, 53],  // Sci-Fi + Mystery + Thriller
+  'cozy': [10751, 16, 35],  // Family + Animation + Comedy
+  'deep cuts': [18, 99],  // Drama + Documentary (obscure picks)
+  noir: [80, 53],  // Crime + Thriller
+  euphoric: [35, 10749],  // Comedy + Romance
+  'sick day': [16, 10751, 35],  // Animation + Family + Comedy
+};
+
+// ============================================
+// PARSE VIBE - Extracts genres from input
+// ============================================
+function parseVibe(input) {
+  const lowerInput = input.toLowerCase();
+  const genres = new Set();
+
+  // First check for exact multi-word matches (priority)
+  const multiWordKeys = ['brain mush', 'mind-bending', 'deep cuts', 'sick day', 'sci-fi'];
+  multiWordKeys.forEach((key) => {
+    if (lowerInput.includes(key)) {
+      VIBE_MAP[key].forEach((id) => genres.add(id));
+    }
+  });
+
+  // Then check single word matches
+  Object.keys(VIBE_MAP).forEach((key) => {
+    // Skip multi-word keys we already checked
+    if (key.includes(' ') || key.includes('-')) return;
+    
+    if (lowerInput.includes(key)) {
+      VIBE_MAP[key].forEach((id) => genres.add(id));
+    }
+  });
+
+  console.log('🔍 parseVibe input:', lowerInput, '→ output:', Array.from(genres));
+  return Array.from(genres);
+}
+
+// ============================================
+// SEARCHBAR - Compact with purple sparkle
+// ============================================
+function SearchBar({ onSearch, onOpenOracle, fullWidth = false }) {
+  return (
+    <div className={`relative flex items-center ${fullWidth ? 'w-full' : 'w-72'}`}>
+      <input
+        type="text"
+        placeholder="Search..."
+        onChange={(e) => onSearch(e.target.value)}
+        className={`w-full rounded-full border border-white/10 bg-zinc-900/50 py-2 pl-5 pr-12 text-sm text-zinc-200 placeholder-zinc-500 outline-none focus:border-orange-500/50 transition-all`}
+      />
+      <button
+        onClick={(e) => { e.preventDefault(); onOpenOracle(); }}
+        className="absolute right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white transition-all"
+        title="Ask the Oracle"
+      >
+        <span className="text-sm">✨</span>
+      </button>
+    </div>
+  );
+}
+
+// ============================================
+// ORACLE OVERLAY - Natural Language Vibe Search
+// ============================================
+function OracleOverlay({ isOpen, onClose, onOracleSearch }) {
+  const [vibeInput, setVibeInput] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (vibeInput.trim()) {
+      onOracleSearch(vibeInput.trim());
+      setVibeInput('');
+      onClose();
+    }
+  };
+
+  const handleQuickMood = (mood) => {
+    onOracleSearch(mood);
+    onClose();
+  };
+
+  const moods = [
+    { label: 'Brain Mush', icon: '🥴', desc: 'Light comedies' },
+    { label: 'Adrenaline', icon: '🍿', desc: 'High energy' },
+    { label: 'Mind-Bending', icon: '🧠', desc: 'Complex sci-fi' },
+    { label: 'Sick Day', icon: '🤒', desc: 'Cozy comfort' },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl">
+      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 shadow-2xl">
+        <div className="border-b border-white/5 bg-zinc-900/50 p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl animate-pulse">🔮</span>
+              <div>
+                <h2 className="text-xl font-bold text-orange-500">The Oracle</h2>
+                <p className="text-xs text-zinc-500">Tell me your vibe</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800 hover:text-white transition-colors"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <form onSubmit={handleSubmit} className="mb-6">
+            <input
+              type="text"
+              value={vibeInput}
+              onChange={(e) => setVibeInput(e.target.value)}
+              placeholder='Tell the Oracle your vibe (e.g., "A dark comedy for a rainy night")'
+              className="w-full rounded-xl border border-white/10 bg-zinc-900 px-5 py-4 text-lg text-zinc-200 placeholder-zinc-500 outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/20 transition-all"
+              autoFocus
+            />
+            <p className="mt-2 text-xs text-zinc-500">Press Enter to search</p>
+          </form>
+
+          <div>
+            <p className="mb-3 text-xs font-medium uppercase tracking-widest text-zinc-500">Quick Start</p>
+            <div className="grid grid-cols-2 gap-3">
+              {moods.map((mood) => (
+                <button
+                  key={mood.label}
+                  onClick={() => handleQuickMood(mood.label)}
+                  className="flex flex-col items-start gap-1 rounded-xl border border-white/5 bg-zinc-900/50 p-4 text-left transition-all hover:scale-[1.02] hover:border-orange-500/30 hover:bg-zinc-900"
+                >
+                  <span className="text-2xl">{mood.icon}</span>
+                  <span className="font-bold text-sm text-zinc-300">{mood.label}</span>
+                  <span className="text-xs text-zinc-500">{mood.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-white/5 bg-zinc-900/30 p-4 text-center">
+          <button onClick={onClose} className="text-xs font-bold text-zinc-600 hover:text-white uppercase tracking-widest transition-colors">
+            Close [Esc]
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// HEADER - Fully Responsive Mobile-First
+// ============================================
+function Header({ onOracleClick }) {
   const { user, isAuthenticated, logout } = useUser();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleSearch = (query) => {
+    if (query?.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
     setIsMobileMenuOpen(false);
   };
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
-      setIsMobileMenuOpen(false);
-    }
-  };
-
   return (
-    <header className="app-header">
-      <div className="header-container">
-        {/* Logo */}
-        <Link to="/" className="logo-link">
-          <IgnesLogo size={35} showText={true} />
+    <header className="sticky top-0 z-50 h-16 w-full border-b border-white/5 bg-zinc-950/80 backdrop-blur-md">
+      <div className="flex h-full max-w-7xl items-center justify-between px-6 mx-auto">
+        
+        {/* Left: Logo */}
+        <Link to="/" className="flex items-center gap-2">
+          <IgnesLogo size={28} />
+          <span className="hidden sm:inline text-xl font-bold tracking-tighter text-white hover:opacity-80">
+            IGNES
+          </span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="desktop-nav">
-          <Link to="/" className="nav-link">Trending</Link>
-          <Link to="/library" className="nav-link">My Library</Link>
-          <Link to="/history" className="nav-link">History</Link>
-          {isAuthenticated ? (
-            <>
-              <Link to="/profile" className="nav-link nav-username">{user?.username}</Link>
-              <button onClick={handleLogout} className="nav-logout">Logout</button>
-            </>
-          ) : (
-            <Link to="/login" className="nav-link">Login</Link>
-          )}
-        </nav>
+        {/* Right: Nav + Search + Auth (Desktop) */}
+        <div className="hidden md:flex items-center gap-6">
+          
+          {/* Navigation Links */}
+          <nav className="flex items-center gap-4">
+            <Link to="/discover" className="text-sm font-medium text-orange-500 hover:text-orange-400 transition-colors">
+              Discover
+            </Link>
+            <Link to="/" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+              Trending
+            </Link>
+            <Link to="/library" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+              Library
+            </Link>
+            <Link to="/history" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+              History
+            </Link>
+          </nav>
 
-        {/* Desktop Search Form */}
-        <form onSubmit={handleSearch} className="header-search">
-          <input
-            type="text"
-            placeholder="Search the Archives..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-        </form>
+          {/* Right-Side Group: Search + Auth */}
+          <div className="flex items-center gap-4 ml-auto">
+            
+            {/* Search Bar */}
+            <SearchBar onSearch={handleSearch} onOpenOracle={onOracleClick} />
 
-        {/* Hamburger Menu Button (Mobile) */}
+            {/* Auth Section */}
+            {isAuthenticated ? (
+              <>
+                <Link to="/profile" className="text-xs font-bold uppercase tracking-widest text-orange-500 hover:text-orange-400">
+                  {user?.username}
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link to="/login" className="text-sm font-semibold text-white bg-zinc-800 px-4 py-1.5 rounded-full hover:bg-zinc-700 transition-colors">
+                Login
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Hamburger Button (Mobile Only) */}
         <button
-          className="hamburger-btn"
-          onClick={toggleMobileMenu}
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="md:hidden p-2 text-zinc-400 hover:text-white transition-colors"
           aria-label="Toggle menu"
-          aria-expanded={isMobileMenuOpen}
         >
-          <span className="hamburger-line"></span>
-          <span className="hamburger-line"></span>
-          <span className="hamburger-line"></span>
+          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            {isMobileMenuOpen ? (
+              <path d="M18 6L6 18M6 6l12 12" />
+            ) : (
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
         </button>
       </div>
 
       {/* Mobile Menu Dropdown */}
-      <div className={`mobile-menu ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
-        <div className="mobile-menu-content">
-          
-          {/* MOBILE SEARCH BAR - Inline styles to prevent CSS conflicts */}
-          <form onSubmit={handleSearch} className="mobile-search-form" style={{ display: 'flex', width: '100%', marginBottom: '15px' }}>
-            <input
-              type="text"
-              placeholder="Search Ignes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ width: '100%', padding: '12px', background: '#1a1a1a', border: '1px solid #991b1b', borderRadius: '8px', color: '#ffffff', outline: 'none' }}
+      {isMobileMenuOpen && (
+        <div className="md:hidden border-t border-white/5 bg-zinc-950 px-6 py-4">
+          <nav className="flex flex-col space-y-4">
+            {/* Full-Width Search Bar */}
+            <SearchBar 
+              onSearch={(q) => { handleSearch(q); setIsMobileMenuOpen(false); }} 
+              onOpenOracle={() => { onOracleClick(); setIsMobileMenuOpen(false); }}
+              fullWidth={true}
             />
-          </form>
 
-          <Link to="/" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>Trending</Link>
-          <Link to="/library" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>My Library</Link>
-          <Link to="/history" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>History</Link>
-          {isAuthenticated ? (
-            <>
-              <Link to="/profile" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>{user?.username}</Link>
-              <button onClick={handleLogout} className="mobile-logout-btn">Logout</button>
-            </>
-          ) : (
-            <Link to="/login" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>Login</Link>
-          )}
+            {/* Navigation Links */}
+            <Link
+              to="/discover"
+              className="text-sm font-medium text-orange-500 hover:text-orange-400 transition-colors py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Discover
+            </Link>
+            <Link
+              to="/"
+              className="text-sm font-medium text-zinc-400 hover:text-white transition-colors py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Trending
+            </Link>
+            <Link
+              to="/library"
+              className="text-sm font-medium text-zinc-400 hover:text-white transition-colors py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Library
+            </Link>
+            <Link
+              to="/history"
+              className="text-sm font-medium text-zinc-400 hover:text-white transition-colors py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              History
+            </Link>
+
+            {/* User Profile & Logout */}
+            {isAuthenticated ? (
+              <>
+                <div className="border-t border-white/5 pt-4 mt-2">
+                  <Link
+                    to="/profile"
+                    className="text-sm font-bold text-orange-500 hover:text-orange-400 transition-colors py-2 block"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    👤 {user?.username}
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="text-left text-sm font-medium text-zinc-400 hover:text-white transition-colors py-2 w-full"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="text-sm font-semibold text-white bg-zinc-800 px-4 py-2 rounded-full hover:bg-zinc-700 transition-colors text-center"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Login
+              </Link>
+            )}
+          </nav>
         </div>
-      </div>
+      )}
     </header>
   );
 }
 
+// ============================================
+// APP CONTENT
+// ============================================
 function AppContent() {
   const location = useLocation();
-  
-  // Hide header on auth pages
+  const { user } = useUser();
+  const navigate = useNavigate();
+  const [isOracleOpen, setIsOracleOpen] = useState(false);
+
   const isAuthPage = ['/login', '/register', '/update-password'].includes(location.pathname);
+
+  // High-IQ Oracle - Maps vibes to genre filters
+  const handleOracleSearch = (vibe) => {
+    console.log('🔮 Oracle received vibe:', vibe);
+
+    // Parse the vibe into TMDB genre IDs using VIBE_MAP
+    const genres = parseVibe(vibe);
+    console.log('🎭 Parsed genres:', genres);
+
+    // Build URL with conditional genre parameter
+    // SAFETY: Never append &genres= if array is empty
+    let searchUrl = '/search?';
+    const params = new URLSearchParams();
+
+    if (genres.length > 0) {
+      // Vibe matched - use genre IDs + original query for TMDB Discover
+      params.set('genres', genres.join(','));
+      params.set('q', vibe);
+      console.log('✅ Using DISCOVER mode with genres:', genres.join(','));
+    } else {
+      // No match - fall back to TMDB text search only (no genres param)
+      params.set('q', vibe);
+      console.log('📝 Using TEXT SEARCH mode (no genre match)');
+    }
+
+    searchUrl += params.toString();
+    console.log('🧭 Navigating to:', searchUrl);
+    
+    navigate(searchUrl);
+    setIsOracleOpen(false);
+  };
 
   return (
     <div className="app">
-      {!isAuthPage && <Header />}
+      {!isAuthPage && <Header onOracleClick={() => setIsOracleOpen(true)} />}
 
       <main className="app-main">
         <Routes>
@@ -147,6 +454,14 @@ function AppContent() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/admin/bugs" element={<BugList />} />
           <Route
+            path="/discover"
+            element={
+              <ProtectedRoute>
+                <DiscoveryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/profile"
             element={
               <ProtectedRoute>
@@ -159,10 +474,19 @@ function AppContent() {
       </main>
 
       <Footer />
+
+      <OracleOverlay
+        isOpen={isOracleOpen}
+        onClose={() => setIsOracleOpen(false)}
+        onOracleSearch={handleOracleSearch}
+      />
     </div>
   );
 }
 
+// ============================================
+// APP ROOT
+// ============================================
 function App() {
   return (
     <Router>

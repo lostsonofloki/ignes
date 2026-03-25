@@ -1,83 +1,29 @@
-import { useState } from 'react';
-import './SearchBar.css';
+import React from 'react';
 
-/**
- * SearchBar component for searching movies
- * @param {Function} onSearch - Callback function when search is submitted
- * @param {boolean} isLoading - Whether a search is in progress
- */
-function SearchBar({ onSearch, isLoading }) {
-  const [query, setQuery] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (query.trim() && onSearch) {
-      onSearch(query.trim());
-    }
-  };
-
-  const handleInputChange = (e) => {
-    setQuery(e.target.value);
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleSubmit(e);
-    }
-  };
-
+const SearchBar = ({ onSearch, onOpenOracle }) => {
+  console.log('--- SEARCHBAR RENDERED ---');
+  
   return (
-    <div className="search-bar-container">
-      <form className="search-form" onSubmit={handleSubmit}>
-        <div className="search-input-wrapper">
-          <svg 
-            className="search-icon" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search for a movie..."
-            value={query}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            disabled={isLoading}
-            aria-label="Search for movies"
-          />
-          {query && (
-            <button
-              type="button"
-              className="clear-button"
-              onClick={() => setQuery('')}
-              disabled={isLoading}
-              aria-label="Clear search"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
-        <button 
-          type="submit" 
-          className="search-button"
-          disabled={isLoading || !query.trim()}
-        >
-          {isLoading ? (
-            <span className="loading-spinner"></span>
-          ) : (
-            'Search'
-          )}
-        </button>
-      </form>
+    <div className="relative flex w-full max-w-sm items-center group">
+      <input
+        type="text"
+        placeholder="Search your library..."
+        onChange={(e) => onSearch(e.target.value)}
+        className="w-full rounded-full border border-white/10 bg-zinc-900/50 py-2 pl-4 pr-12 text-sm text-zinc-200 placeholder-zinc-500 outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/20 transition-all"
+      />
+      
+      {/* THE ORACLE SPARKLE ✨ - BRIGHT PURPLE */}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          onOpenOracle();
+        }}
+        className="absolute right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-purple-600 text-purple-200 hover:bg-purple-500 hover:text-white transition-all shadow-lg shadow-purple-500/30"
+      >
+        <span className="text-sm">✨</span>
+      </button>
     </div>
   );
-}
+};
 
 export default SearchBar;

@@ -4,7 +4,14 @@
  */
 
 // Application Version
-export const APP_VERSION = '1.3.0';
+export const APP_VERSION = '1.3.6';
+
+// Theme Colors
+export const THEME_COLORS = {
+  accent: 'orange-500',
+  bg: 'zinc-950',
+  card: 'zinc-900',
+};
 
 // Application Info
 export const APP_NAME = 'Ignes';

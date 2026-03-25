@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
-import { getSupabase } from '../supabaseClient';
+import { getSupabase, createSupabaseWithStorage } from '../supabaseClient';
 import './LoginPage.css';
 
 /**
  * Login Page Component
+ * Features Remember Me checkbox with dynamic storage persistence
  */
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true); // Default to true (localStorage)
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,7 +34,22 @@ function LoginPage() {
         throw new Error('Please enter both email and password');
       }
 
+      // CRITICAL: Create Supabase client with appropriate storage
+      // - rememberMe = true → localStorage (persists across browser closes)
+      // - rememberMe = false → sessionStorage (cleared when tab closes)
+      const supabase = createSupabaseWithStorage(rememberMe);
+
+      // Sign in with the custom client
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) throw signInError;
+
+      // Update UserContext with the new session
       await login(email, password);
+
       navigate(from, { replace: true });
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -54,7 +71,7 @@ function LoginPage() {
 
       const supabase = getSupabase();
       const redirectUrl = `${window.location.origin}/update-password`;
-      
+
       await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: redirectUrl,
       });
@@ -131,6 +148,24 @@ function LoginPage() {
                     disabled={isSubmitting}
                     autoComplete="current-password"
                   />
+                </div>
+
+                {/* Remember Me Checkbox - Deep Ember Theme */}
+                <div className="flex items-center gap-2 mb-4">
+                  <input
+                    id="remember-me"
+                    type="checkbox"
+                    className="w-4 h-4 bg-zinc-800 border-zinc-700 rounded accent-amber-500 cursor-pointer"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    disabled={isSubmitting}
+                  />
+                  <label
+                    htmlFor="remember-me"
+                    className="text-sm text-zinc-400 cursor-pointer select-none"
+                  >
+                    Remember me
+                  </label>
                 </div>
 
                 <button
