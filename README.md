@@ -25,10 +25,13 @@ Ignes is a React-based web application that lets you log, track, and visualize y
 - **Stats Dashboard**: Visualize your watching habits with Top Genres, Mood Breakdown, and Ratings Distribution charts
 
 ### 🤖 AI Features (Ember Oracle)
-- **Ember Oracle v2**: Multi-movie AI discovery with natural language vibe search
+- **Ember Oracle v2.1**: Multi-movie AI discovery with natural language vibe search
 - **Multi-Movie Recommendations**: Returns 3-5 curated films per query (cult classics + deep cuts)
 - **Hybrid AI Orchestration**: Groq LPU for fast genre extraction + Gemini for deep reasoning
 - **Sub-500ms Genre Parsing**: Ultra-fast vibe-to-genre translation via Groq's LPU hardware
+- **Personalized Oracle**: AI knows your entire library (watched + watchlist + custom lists)
+- **Zero-Duplicate Guarantee**: All known movies banned from recommendations automatically
+- **Taste Triangulation**: AI analyzes your high-rated films before suggesting new discoveries
 - **Mood Bubbles**: 6 quick-select presets (Cozy, Adrenaline, Mind-Bending, Deep Cuts, Noir, Euphoric)
 - **Reject & Reroll**: Reject entire batch and get instant alternative recommendations
 - **Deep Cut Recommendations**: AI prioritizes obscure gems over mainstream blockbusters

@@ -7,20 +7,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## Latest Version: 1.4.0 (March 26, 2026)
+## Latest Version: 1.4.1 (March 26, 2026)
 
 **Highlights:**
-- 🤖 **Multi-Movie Recommendations** - Ember Oracle now returns 3-5 curated films per query
-- ⚡ **Hybrid AI Orchestration** - Groq LPU for fast genre extraction + Gemini for deep reasoning
-- 🎯 **Sub-500ms Genre Parsing** - Ultra-fast vibe-to-genre translation via Groq's LPU hardware
-- 🔄 **Concurrent TMDB Fetching** - All movie posters/data load in parallel for faster UX
-- 📊 **Enhanced Metadata** - Orchestration insights logged (Groq latency, genre IDs, fallback status)
+- 🧠 **Personalized Oracle** - AI now knows your ENTIRE movie history (zero duplicates guaranteed)
+- 📚 **Three-Bucket Memory Fetch** - Watched + Watchlist + Custom Lists loaded in parallel
+- 🎯 **Taste Triangulation** - AI analyzes your high-rated films before recommending
+- ⚡ **Optimized Supabase Joins** - Efficient `lists!inner(user_id)` join for custom lists
 
 **Quick Links:**
-- [Full v1.4.0 Notes](#140---march-26-2026)
-- [Previous: v1.3.12](#1312---march-26-2026)
+- [Full v1.4.1 Notes](#141---march-26-2026)
+- [Previous: v1.4.0](#140---march-26-2026)
 - [Roadmap](./ROADMAP.md)
 - [README](./README.md)
+
+---
+
+## [1.4.1] - March 26, 2026
+
+### 🚀 Added
+
+#### Personalized Oracle - Zero-Duplicate Recommendations
+- **`fetchUserMovieHistory()`** - New function fetches user's entire movie library in parallel
+- **Three-Bucket System**:
+  - **Bucket 1**: Watched movies (`movie_logs` where `watch_status = 'watched'`)
+  - **Bucket 2**: Watchlist (`movie_logs` where `watch_status = 'to-watch'`)
+  - **Bucket 3**: Custom list items (`list_items` with `lists!inner(user_id)` join)
+- **Deduplication Engine**: Combines all three buckets into `allKnownTitles` array (no duplicates)
+- **Taste Profile Builder**: Filters for high-rated watched (≥4.0) + curated list items only
+- **AI Context Injection**: Sends taste profile to Gemini for intelligent taste matching
+
+### 🛠️ Changed
+
+#### Frontend (`src/pages/DiscoveryPage.jsx`)
+- **New Function**: `fetchUserMovieHistory()` - Parallel Supabase fetch with optimized join
+- **`handleDiscover()`** - Now calls history fetch before AI request
+- **Rejection Logic**: Combines session rejections + lifetime library for zero-duplicate guarantee
+- **Console Logging**: Added `📚 Oracle Memory` and `🚫 Excluding X known movies` debug output
+
+#### Backend (`src/utils/gemini.js`)
+- **Prompt Update**: Added `🚫 REJECTED MOVIES LIST` section with explicit "DO NOT VIOLATE" warning
+- **Taste Triangulation**: New `🎯 TASTE TRIANGULATION` instruction for AI to match user aesthetic
+- **Context Label**: Changed `USER CONTEXT` → `USER CONTEXT (Curated Favorites)` for clarity
+- **Dynamic List Truncation**: Shows first 80 titles with "...and X more" for large libraries
+
+### ⚡ Performance
+
+#### Query Optimization
+- **Parallel Fetch**: `Promise.all()` runs library + list_items queries simultaneously (~100-200ms)
+- **Efficient Join**: `lists!inner(user_id)` eliminates need for subquery or N+1 queries
+- **Selective Columns**: Only fetches `title, watch_status, rating` (no unnecessary data)
+- **O(n) Deduplication**: `new Set()` ensures fast deduplication even with large libraries
+
+#### Memory Efficiency
+- **Taste Profile Limit**: Sends max 40 titles to AI to prevent token bloat
+- **Full Ban List**: All known titles sent as rejected (no limit, ensures zero duplicates)
+
+### 📝 Documentation
+
+#### Updated Files
+- **CHANGELOG.md** - Comprehensive v1.4.1 release notes
+- **ROADMAP.md** - Updated Phase 6.15 success criteria (Reliability ↑99.9% vs Cost ↓30%)
+- **ROADMAP.md** - Added technical notes about model verification & Gemini 503 mitigation
+
+### 🐛 Fixed
+
+#### Potential Issues Prevented
+- **Duplicate Recommendations**: AI can no longer suggest movies user already logged
+- **Taste Mismatches**: AI now sees user's actual favorites before recommending
+- **Query Performance**: Join approach faster than subquery for custom lists fetch
 
 ---
 

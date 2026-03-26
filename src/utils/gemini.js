@@ -389,7 +389,7 @@ export const getHybridRecommendation = async (vibe, options = {}) => {
 
   const prompt = `${fullSystemPrompt}
 
-USER CONTEXT:
+USER CONTEXT (Curated Favorites):
 ${userContext}
 
 CURRENT MOOD/REQUEST:
@@ -401,6 +401,16 @@ CRITICAL REQUIREMENTS:
 3. Each movie must be unique (no duplicates)
 4. Prioritize narrative complexity, emotional resonance, and visual storytelling
 5. NEVER include tmdb_id - we will verify separately
+
+🚫 REJECTED MOVIES LIST (STRICT CONSTRAINT - DO NOT VIOLATE):
+${rejectedTitles.length > 0 ? `Under NO circumstances suggest ANY of these titles. They are already in the user's library, watchlist, or custom collections:
+
+[${rejectedTitles.slice(0, 80).join(', ')}${rejectedTitles.length > 80 ? `... and ${rejectedTitles.length - 80} more` : ''}]
+
+Your job is to suggest NEW discoveries they haven't logged yet.` : ''}
+
+🎯 TASTE TRIANGULATION:
+Use the USER CONTEXT above to understand their niche interests. If they love atmospheric horror, don't suggest slapstick comedy. If they appreciate slow-burn indie dramas, don't recommend Michael Bay. Match their aesthetic while expanding their horizons.
 
 Return ONLY valid JSON. NO text before or after. NO markdown formatting.
 

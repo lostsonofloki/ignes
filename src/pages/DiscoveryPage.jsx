@@ -41,6 +41,65 @@ function DiscoveryPage() {
   const [isListDropdownOpen, setIsListDropdownOpen] = useState(false);
   const [userLists, setUserLists] = useState([]);
 
+  /**
+   * Optimized History Fetch - Watched + To-Watch + Custom Lists
+   * Uses Promise.all for parallel execution (sub-500ms data prep)
+   */
+  const fetchUserMovieHistory = async () => {
+    if (!user?.id) return { allKnownTitles: [], userTasteContext: '' };
+
+    try {
+      const supabase = getSupabase();
+
+      // Parallel execution for sub-500ms data prep
+      const [libraryResult, listItemsResult] = await Promise.all([
+        // Bucket 1 & 2: Watched and To-Watch from movie_logs
+        supabase
+          .from('movie_logs')
+          .select('title, watch_status, rating')
+          .eq('user_id', user.id),
+
+        // Bucket 3: Every title from every custom list the user owns
+        // Uses a "Join" - selecting titles where the parent list belongs to the user
+        supabase
+          .from('list_items')
+          .select('title, lists!inner(user_id)')
+          .eq('lists.user_id', user.id)
+      ]);
+
+      const logs = libraryResult.data || [];
+      const listItems = listItemsResult.data || [];
+
+      // 1. Every title the user has ever touched (for the "Banned" list)
+      const allKnownTitles = [...new Set([
+        ...logs.map(l => l.title),
+        ...listItems.map(i => i.title)
+      ])];
+
+      // 2. Build the "Taste Profile" 
+      // Only send high-rated Watched movies and Custom List entries to the AI
+      const positiveWatched = logs
+        .filter(l => l.watch_status === 'watched' && (l.rating >= 4 || !l.rating))
+        .map(l => l.title);
+      
+      const curatedTitles = listItems.map(i => i.title);
+
+      const tasteProfile = [...new Set([...positiveWatched, ...curatedTitles])];
+      
+      // Set deduplication is O(n) - keeps it fast
+      const userTasteContext = tasteProfile.length > 0
+        ? `User's Curated Favorites: ${tasteProfile.slice(0, 40).join(', ')}`
+        : 'No history found.';
+
+      console.log(`📚 Oracle Memory: ${allKnownTitles.length} titles banned, ${tasteProfile.length} in taste profile`);
+
+      return { allKnownTitles, userTasteContext };
+    } catch (err) {
+      console.error('Oracle Memory Fetch Error:', err);
+      return { allKnownTitles: [], userTasteContext: '' };
+    }
+  };
+
   useEffect(() => {
     const fetchFavorites = async () => {
       if (!user?.id) return;
@@ -106,14 +165,16 @@ function DiscoveryPage() {
     setTmdbResults([]);
 
     try {
-      const userContext = userFavorites.length > 0
-        ? `User's favorite films: ${userFavorites.map(f => f.title).join(', ')}`
-        : 'No favorite films provided';
+      // Fetch user's entire movie history in parallel
+      const { allKnownTitles, userTasteContext } = await fetchUserMovieHistory();
 
-      const allRejectedTitles = [...rejectedTitles, ...additionalRejectedTitles];
+      // Combine session rejections with lifetime library (zero duplicates allowed)
+      const allRejectedTitles = [...new Set([...rejectedTitles, ...additionalRejectedTitles, ...allKnownTitles])];
+
+      console.log(`🚫 Excluding ${allRejectedTitles.length} known movies from recommendations`);
 
       const aiResponse = await getHybridRecommendation(tempPrompt, {
-        userContext,
+        userContext: userTasteContext,
         systemPrompt: BASE_SYSTEM_PROMPT,
         rejectedTitles: allRejectedTitles,
       });
