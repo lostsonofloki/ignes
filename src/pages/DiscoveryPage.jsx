@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
 import { useToast } from '../context/ToastContext';
 import { getSupabase } from '../supabaseClient';
-import { discoverMovies } from '../utils/gemini';
+import { getHybridRecommendation, BASE_SYSTEM_PROMPT } from '../utils/gemini';
 import { fetchTMDBMovie } from '../api/tmdb';
 import LogMovieModal from '../components/LogMovieModal';
 import './DiscoveryPage.css';
@@ -16,38 +16,6 @@ const MOOD_PRESETS = [
   { id: 'euphoric', label: 'Euphoric', icon: '✨', prompt: 'Uplifting cinema that leaves me feeling alive' },
 ];
 
-const BASE_SYSTEM_PROMPT = `You are the Ember Oracle, an elite film historian and curator for Ignes, a premium movie discovery platform.
-
-YOUR ROLE:
-- Recommend films that are PERFECT tonal matches for the user's mood
-- Prioritize DEEP CUTS and underappreciated gems over mainstream blockbusters
-- NEVER suggest obvious IMDB Top 250 picks unless they're genuinely the best match
-- Focus on directorial vision, cinematography, and emotional resonance
-
-YOUR RESPONSE FORMAT:
-Return ONLY valid JSON with this structure:
-{
-  "title": "Exact movie title",
-  "year": 1994,
-  "rationale": "2-3 sentences explaining WHY this film matches their mood, referencing specific directorial choices, themes, or cinematic techniques",
-  "vibeCheck": "A short, punchy 5-7 word tagline capturing the essence"
-}
-
-USER CONTEXT:
-The user has provided their favorite films and current mood. Use this to understand their taste profile. If they love atmospheric horror, don't suggest slapstick comedy. If they appreciate slow-burn indie dramas, don't recommend Michael Bay.
-
-CONSTRAINT - REJECTED MOVIES:
-If the user provides a list of rejected movies, DO NOT suggest any of them again. These films have been explicitly rejected and the user wants different recommendations.
-
-AVOID:
-- Generic plot summaries
-- Obvious blockbuster recommendations
-- Films that don't match the stated mood
-- More than 1-2 sentences in the rationale
-
-BE SPECIFIC:
-Instead of "This film is dark and moody," say "Rehane's use of natural lighting and long takes creates an oppressive atmosphere that mirrors the protagonist's psychological decay."`;
-
 function DiscoveryPage() {
   const { user } = useUser();
   let toast;
@@ -60,8 +28,8 @@ function DiscoveryPage() {
   const [selectedMood, setSelectedMood] = useState(null);
   const [tempPrompt, setTempPrompt] = useState('');
   const [isDiscovering, setIsDiscovering] = useState(false);
-  const [recommendation, setRecommendation] = useState(null);
-  const [tmdbData, setTmdbData] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
+  const [tmdbResults, setTmdbResults] = useState([]);
   const [error, setError] = useState('');
   const [userFavorites, setUserFavorites] = useState([]);
   const [rejectedIds, setRejectedIds] = useState([]);
@@ -69,6 +37,7 @@ function DiscoveryPage() {
   
   // Library integration states
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+  const [selectedMovieForModal, setSelectedMovieForModal] = useState(null);
   const [isListDropdownOpen, setIsListDropdownOpen] = useState(false);
   const [userLists, setUserLists] = useState([]);
 
@@ -133,8 +102,8 @@ function DiscoveryPage() {
 
     setIsDiscovering(true);
     setError('');
-    setRecommendation(null);
-    setTmdbData(null);
+    setRecommendations([]);
+    setTmdbResults([]);
 
     try {
       const userContext = userFavorites.length > 0
@@ -142,28 +111,34 @@ function DiscoveryPage() {
         : 'No favorite films provided';
 
       const allRejectedTitles = [...rejectedTitles, ...additionalRejectedTitles];
-      const rejectedContext = allRejectedTitles.length > 0
-        ? `\n\nREJECTED MOVIES (DO NOT SUGGEST): ${allRejectedTitles.join(', ')}`
-        : '';
 
-      const systemPrompt = `${BASE_SYSTEM_PROMPT}${rejectedContext}`;
-
-      const aiResponse = await discoverMovies({
-        mood: tempPrompt,
+      const aiResponse = await getHybridRecommendation(tempPrompt, {
         userContext,
-        systemPrompt,
+        systemPrompt: BASE_SYSTEM_PROMPT,
+        rejectedTitles: allRejectedTitles,
       });
 
-      if (!aiResponse || !aiResponse.title) {
+      if (!aiResponse || !aiResponse.recommendations || aiResponse.recommendations.length === 0) {
         throw new Error('The Oracle is silent. Please try again.');
       }
 
-      setRecommendation(aiResponse);
-
-      const tmdbMovie = await fetchTMDBMovie(aiResponse.title, aiResponse.year?.toString() || '');
-      if (tmdbMovie) {
-        setTmdbData(tmdbMovie);
+      if (aiResponse._meta) {
+        console.log('🔀 Orchestration:', aiResponse._meta.groqUsed ? 'Groq + Gemini' : 'Gemini-only fallback');
+        console.log('🏷️ Genres:', aiResponse._meta.genreIds);
       }
+
+      setRecommendations(aiResponse.recommendations);
+
+      // Fetch TMDB data for ALL movies concurrently
+      const tmdbPromises = aiResponse.recommendations.map(rec =>
+        fetchTMDBMovie(rec.title, rec.year?.toString() || '')
+      );
+
+      const tmdbResponses = await Promise.all(tmdbPromises);
+      
+      // Keep ALL results (including nulls) to preserve index alignment
+      setTmdbResults(tmdbResponses);
+
     } catch (err) {
       console.error('Discovery error:', err);
       setError(err.message || 'The Oracle could not find a match. Try a different mood.');
@@ -173,15 +148,16 @@ function DiscoveryPage() {
   };
 
   const handleRejectAndReroll = async () => {
-    if (!tmdbData?.id && !recommendation?.title) return;
+    if (recommendations.length === 0) return;
 
-    const newRejectedIds = tmdbData?.id ? [...rejectedIds, tmdbData.id] : rejectedIds;
-    const newRejectedTitles = recommendation?.title ? [...rejectedTitles, recommendation.title] : rejectedTitles;
+    // Reject all movies from current batch and reroll
+    const allNewRejectedTitles = recommendations.map(rec => rec.title);
+    const allNewRejectedIds = tmdbResults.filter(t => t).map(t => t.id);
 
-    setRejectedIds(newRejectedIds);
-    setRejectedTitles(newRejectedTitles);
+    setRejectedIds([...rejectedIds, ...allNewRejectedIds]);
+    setRejectedTitles([...rejectedTitles, ...allNewRejectedTitles]);
 
-    await handleDiscover(newRejectedIds, newRejectedTitles);
+    await handleDiscover(allNewRejectedIds, allNewRejectedTitles);
   };
 
   const handleKeyDown = (e) => {
@@ -191,14 +167,14 @@ function DiscoveryPage() {
     }
   };
 
-  const getMovieDataForModal = () => {
-    if (!tmdbData) return null;
+  const getMovieDataForModal = (movie) => {
+    if (!movie) return null;
     return {
-      id: tmdbData.id,
-      title: tmdbData.title,
-      poster_path: tmdbData.poster_path,
-      release_date: tmdbData.release_date,
-      overview: tmdbData.overview
+      id: movie.id,
+      title: movie.title,
+      poster_path: movie.poster_path,
+      release_date: movie.release_date,
+      overview: movie.overview
     };
   };
 
@@ -264,191 +240,202 @@ function DiscoveryPage() {
         )}
 
         {console.log('=== DISCOVERY RENDER DEBUG ===')}
-        {console.log('recommendation:', recommendation)}
-        {console.log('tmdbData:', tmdbData)}
+        {console.log('recommendations:', recommendations)}
+        {console.log('tmdbResults:', tmdbResults)}
         {console.log('userLists:', userLists)}
-        {recommendation && (
-          <div className="recommendation-card animate-in fade-in">
-            {console.log('✅ RENDERING CARD:', recommendation.title)}
-            <div className="rec-poster-container">
-              {tmdbData?.poster_path ? (
-                <img
-                  src={`https://image.tmdb.org/t/p/w500${tmdbData.poster_path}`}
-                  alt={recommendation.title}
-                  className="rec-poster"
-                />
-              ) : (
-                <div className="rec-poster-placeholder">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <path d="M21 15l-5-5L5 21" />
-                  </svg>
-                </div>
-              )}
-            </div>
+        {recommendations.length > 0 && (
+          <div className="recommendations-list">
+            {recommendations.map((rec, index) => {
+              // Safe matching: use TMDB result at same index (preserved by not filtering)
+              const movieTmdb = tmdbResults[index] || null;
 
-            <div className="rec-content">
-              <div className="rec-header">
-                <h2 className="rec-title">{recommendation.title}</h2>
-                <span className="rec-year">{tmdbData?.release_date?.split('-')[0] || recommendation.year}</span>
-              </div>
+              return (
+                <div key={`${rec.title}-${rec.year}`} className="recommendation-card animate-in fade-in">
+                  <div className="rec-poster-container">
+                    {movieTmdb?.poster_path ? (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w500${movieTmdb.poster_path}`}
+                        alt={rec.title}
+                        className="rec-poster"
+                      />
+                    ) : (
+                      <div className="rec-poster-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <path d="M21 15l-5-5L5 21" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
 
-              <div className="rec-vibe-check">
-                <span className="vibe-label">Vibe Check:</span>
-                <span className="vibe-text">{recommendation.vibeCheck}</span>
-              </div>
-
-              <div className="rec-rationale">
-                <h3 className="rationale-title">Why Ignes Picked This</h3>
-                <p className="rationale-text">{recommendation.rationale}</p>
-              </div>
-
-              <div className="rec-actions">
-                {/* View on TMDB */}
-                {tmdbData?.id && (
-                  <a
-                    href={`https://www.themoviedb.org/movie/${tmdbData.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="tmdb-link"
-                  >
-                    View on TMDB
-                  </a>
-                )}
-
-                {/* Watched Button */}
-                <button
-                  onClick={() => {
-                    if (tmdbData) setIsLogModalOpen(true);
-                  }}
-                  className="lib-action-btn"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                    <polyline points="22 4 12 14.01 9 11.01" />
-                  </svg>
-                  Watched
-                </button>
-
-                {/* Watchlist Button */}
-                <button
-                  onClick={async () => {
-                    if (!tmdbData || !user?.id) return;
-                    try {
-                      const supabase = getSupabase();
-                      
-                      // Check if already in watchlist
-                      const { data: existing } = await supabase
-                        .from('movie_logs')
-                        .select('id')
-                        .eq('user_id', user.id)
-                        .eq('tmdb_id', tmdbData.id)
-                        .eq('watch_status', 'to-watch')
-                        .maybeSingle();
-
-                      if (existing) {
-                        toast.info('Already in Watchlist');
-                        return;
-                      }
-
-                      const { error } = await supabase.from('movie_logs').insert({
-                        user_id: user.id,
-                        tmdb_id: tmdbData.id,
-                        title: tmdbData.title,
-                        year: tmdbData.release_date?.split('-')[0],
-                        poster: tmdbData.poster_path,
-                        watch_status: 'to-watch',
-                        rating: 0,
-                        moods: [],
-                        review: ''
-                      });
-                      if (error) throw error;
-                      toast.success(`Added to Watchlist`);
-                    } catch (err) {
-                      console.error('Watchlist error:', err);
-                      toast.error('Failed to add to watchlist');
-                    }
-                  }}
-                  className="lib-action-btn"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                  Watchlist
-                </button>
-
-                {/* Add to List Button */}
-                <div className="relative" style={{ zIndex: 100 }}>
-                  <button
-                    onClick={() => setIsListDropdownOpen(!isListDropdownOpen)}
-                    className="lib-action-btn"
-                    disabled={userLists.length === 0}
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                      <polyline points="17 21 17 13 7 13 7 21" />
-                      <polyline points="7 3 7 8 15 8" />
-                    </svg>
-                    Add to List
-                  </button>
-                  {isListDropdownOpen && userLists.length > 0 && (
-                    <div className="list-dropdown" style={{ right: 0, overflow: 'visible', zIndex: 9999 }}>
-                      {userLists.map((list) => (
-                        <button
-                          key={list.id}
-                          onClick={async () => {
-                            try {
-                              const supabase = getSupabase();
-                              const { error } = await supabase.from('list_items').insert({
-                                list_id: list.id,
-                                tmdb_id: tmdbData.id,
-                                title: tmdbData.title,
-                                poster_path: tmdbData.poster_path
-                              });
-                              if (error) throw error;
-                              toast.success(`Added to ${list.name}`);
-                              setIsListDropdownOpen(false);
-                            } catch (err) {
-                              console.error('Add to list error:', err);
-                              toast.error(err.message?.includes('duplicate') ? 'Already in this list' : 'Failed to add to list');
-                            }
-                          }}
-                          className="list-dropdown-item"
-                        >
-                          {list.name}
-                        </button>
-                      ))}
+                  <div className="rec-content">
+                    <div className="rec-header">
+                      <h2 className="rec-title">{movieTmdb?.title || rec.title}</h2>
+                      <span className="rec-year">{movieTmdb?.release_date?.split('-')[0] || rec.year}</span>
                     </div>
-                  )}
-                </div>
 
-                {/* Reject & Reroll */}
-                <button
-                  className="reject-reroll-btn"
-                  onClick={handleRejectAndReroll}
-                  disabled={isDiscovering}
-                  title="Reject this suggestion and get a new recommendation"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M23 4v6h-6M20.49 15a9 9 0 0 1-2.82-3.36M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                    <path d="M1 4v6h6M3.51 9a9 9 0 0 1 2.82-3.36"/>
-                  </svg>
-                  Reject & Reroll
-                </button>
-              </div>
+                    <div className="rec-vibe-check">
+                      <span className="vibe-label">Vibe Check:</span>
+                      <span className="vibe-text">{rec.vibeCheck}</span>
+                    </div>
 
-              {rejectedTitles.length > 0 && (
-                <div className="rejected-count">
-                  <span className="rejected-badge">{rejectedTitles.length}</span>
-                  <span className="rejected-text">movies rejected this session</span>
+                    <div className="rec-rationale">
+                      <h3 className="rationale-title">Why Ignes Picked This</h3>
+                      <p className="rationale-text">{rec.rationale}</p>
+                    </div>
+
+                    <div className="rec-actions">
+                      {/* View on TMDB */}
+                      {movieTmdb?.id && (
+                        <a
+                          href={`https://www.themoviedb.org/movie/${movieTmdb.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="tmdb-link"
+                        >
+                          View on TMDB
+                        </a>
+                      )}
+
+                      {/* Watched Button */}
+                      <button
+                        onClick={() => {
+                          if (movieTmdb) {
+                            setSelectedMovieForModal(movieTmdb);
+                            setIsLogModalOpen(true);
+                          }
+                        }}
+                        className="lib-action-btn"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                          <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                        Watched
+                      </button>
+
+                      {/* Watchlist Button */}
+                      <button
+                        onClick={async () => {
+                          if (!movieTmdb || !user?.id) return;
+                          try {
+                            const supabase = getSupabase();
+
+                            // Check if already in watchlist
+                            const { data: existing } = await supabase
+                              .from('movie_logs')
+                              .select('id')
+                              .eq('user_id', user.id)
+                              .eq('tmdb_id', movieTmdb.id)
+                              .eq('watch_status', 'to-watch')
+                              .maybeSingle();
+
+                            if (existing) {
+                              toast.info('Already in Watchlist');
+                              return;
+                            }
+
+                            const { error } = await supabase.from('movie_logs').insert({
+                              user_id: user.id,
+                              tmdb_id: movieTmdb.id,
+                              title: movieTmdb.title,
+                              year: movieTmdb.release_date?.split('-')[0],
+                              poster: movieTmdb.poster_path,
+                              watch_status: 'to-watch',
+                              rating: 0,
+                              moods: [],
+                              review: ''
+                            });
+                            if (error) throw error;
+                            toast.success(`Added to Watchlist`);
+                          } catch (err) {
+                            console.error('Watchlist error:', err);
+                            toast.error('Failed to add to watchlist');
+                          }
+                        }}
+                        className="lib-action-btn"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 5v14M5 12h14" />
+                        </svg>
+                        Watchlist
+                      </button>
+
+                      {/* Add to List Button */}
+                      <div className="relative" style={{ zIndex: 100 }}>
+                        <button
+                          onClick={() => setIsListDropdownOpen(!isListDropdownOpen)}
+                          className="lib-action-btn"
+                          disabled={userLists.length === 0}
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                          </svg>
+                          Add to List
+                        </button>
+                        {isListDropdownOpen && userLists.length > 0 && (
+                          <div className="list-dropdown" style={{ right: 0, overflow: 'visible', zIndex: 9999 }}>
+                            {userLists.map((list) => (
+                              <button
+                                key={list.id}
+                                onClick={async () => {
+                                  try {
+                                    const supabase = getSupabase();
+                                    const { error } = await supabase.from('list_items').insert({
+                                      list_id: list.id,
+                                      tmdb_id: movieTmdb.id,
+                                      title: movieTmdb.title,
+                                      poster_path: movieTmdb.poster_path
+                                    });
+                                    if (error) throw error;
+                                    toast.success(`Added to ${list.name}`);
+                                    setIsListDropdownOpen(false);
+                                  } catch (err) {
+                                    console.error('Add to list error:', err);
+                                    toast.error(err.message?.includes('duplicate') ? 'Already in this list' : 'Failed to add to list');
+                                  }
+                                }}
+                                className="list-dropdown-item"
+                              >
+                                {list.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Reject & Reroll */}
+                      <button
+                        className="reject-reroll-btn"
+                        onClick={handleRejectAndReroll}
+                        disabled={isDiscovering}
+                        title="Reject all and get new recommendations"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M23 4v6h-6M20.49 15a9 9 0 0 1-2.82-3.36M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                          <path d="M1 4v6h6M3.51 9a9 9 0 0 1 2.82-3.36"/>
+                        </svg>
+                        Reject & Reroll
+                      </button>
+                    </div>
+
+                    {rejectedTitles.length > 0 && (
+                      <div className="rejected-count">
+                        <span className="rejected-badge">{rejectedTitles.length}</span>
+                        <span className="rejected-text">movies rejected this session</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
         )}
 
-        {!recommendation && !isDiscovering && !error && (
+        {!recommendations.length && !isDiscovering && !error && (
           <div className="empty-state">
             <div className="empty-icon">🎬</div>
             <p>Select a mood or describe your vibe to begin</p>
@@ -457,13 +444,17 @@ function DiscoveryPage() {
       </div>
 
       {/* Log Movie Modal */}
-      {isLogModalOpen && tmdbData && (
+      {isLogModalOpen && selectedMovieForModal && (
         <LogMovieModal
-          movie={getMovieDataForModal()}
-          onClose={() => setIsLogModalOpen(false)}
+          movie={getMovieDataForModal(selectedMovieForModal)}
+          onClose={() => {
+            setIsLogModalOpen(false);
+            setSelectedMovieForModal(null);
+          }}
           onSaved={() => {
             setIsLogModalOpen(false);
-            toast.success(`"${tmdbData.title}" logged successfully!`);
+            setSelectedMovieForModal(null);
+            toast.success(`"${selectedMovieForModal.title}" logged successfully!`);
           }}
         />
       )}

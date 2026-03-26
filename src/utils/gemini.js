@@ -1,6 +1,43 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { fetchGroqGenres, TMDB_GENRES } from './groq';
 
 // Initialize Gemini AI with v1beta endpoint for Gemini 3 Preview models
+
+/**
+ * Base system prompt for the Ember Oracle
+ * Exported for use in getHybridRecommendation
+ */
+export const BASE_SYSTEM_PROMPT = `You are the Ember Oracle, an elite film historian and curator for Ignes, a premium movie discovery platform.
+
+YOUR ROLE:
+- Recommend films that are PERFECT tonal matches for the user's mood
+- Prioritize DEEP CUTS and underappreciated gems over mainstream blockbusters
+- NEVER suggest obvious IMDB Top 250 picks unless they're genuinely the best match
+- Focus on directorial vision, cinematography, and emotional resonance
+
+YOUR RESPONSE FORMAT:
+Return ONLY valid JSON with this structure:
+{
+  "title": "Exact movie title",
+  "year": 1994,
+  "rationale": "2-3 sentences explaining WHY this film matches their mood, referencing specific directorial choices, themes, or cinematic techniques",
+  "vibeCheck": "A short, punchy 5-7 word tagline capturing the essence"
+}
+
+USER CONTEXT:
+The user has provided their favorite films and current mood. Use this to understand their taste profile. If they love atmospheric horror, don't suggest slapstick comedy. If they appreciate slow-burn indie dramas, don't recommend Michael Bay.
+
+CONSTRAINT - REJECTED MOVIES:
+If the user provides a list of rejected movies, DO NOT suggest any of them again. These films have been explicitly rejected and the user wants different recommendations.
+
+AVOID:
+- Generic plot summaries
+- Obvious blockbuster recommendations
+- Films that don't match the stated mood
+- More than 1-2 sentences in the rationale
+
+BE SPECIFIC:
+Instead of "This film is dark and moody," say "Rehane's use of natural lighting and long takes creates an oppressive atmosphere that mirrors the protagonist's psychological decay."`;
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 if (!apiKey) {
@@ -291,6 +328,119 @@ Format:
     return JSON.parse(cleanJson);
   } catch (error) {
     console.error('Error in Ember Oracle discovery:', error);
+    throw new Error('The Oracle is silent. Please try again.');
+  }
+};
+
+/**
+ * Multi-Model Orchestration: Groq (fast) + Gemini (deep reasoning)
+ * Pipeline: User Query → Groq Genre IDs → Gemini with context → 3-5 Recommendations
+ * Fallback: If Groq fails, bypass to Gemini-only mode
+ * 
+ * @param {string} vibe - User's natural language mood/vibe description
+ * @param {Object} options - Optional parameters
+ * @param {string} options.userContext - User's favorite films for context
+ * @param {string} options.systemPrompt - Custom system prompt
+ * @param {string[]} options.rejectedTitles - Movies to exclude
+ * @returns {Promise<Object>} - { recommendations: Array, _meta: Object }
+ */
+export const getHybridRecommendation = async (vibe, options = {}) => {
+  const {
+    userContext = 'No favorite films provided',
+    systemPrompt = BASE_SYSTEM_PROMPT,
+    rejectedTitles = [],
+  } = options;
+
+  const rejectedContext = rejectedTitles.length > 0
+    ? `\n\nREJECTED MOVIES (DO NOT SUGGEST): ${rejectedTitles.join(', ')}`
+    : '';
+
+  const fullSystemPrompt = `${systemPrompt}${rejectedContext}`;
+
+  let genreIds = [];
+  let groqSuccess = false;
+  let startTime = performance.now();
+
+  // Step 1: Try Groq for fast genre extraction (target: sub-500ms)
+  try {
+    genreIds = await fetchGroqGenres(vibe);
+    const latency = Math.round(performance.now() - startTime);
+    console.log(`⚡ Groq latency: ${latency}ms`);
+    groqSuccess = true;
+  } catch (groqError) {
+    console.warn('⚠️ Groq failed, falling back to Gemini-only mode:', groqError.message);
+  }
+
+  // Step 2: Gemini deep reasoning with (optional) genre context
+  const model = genAI.getGenerativeModel({
+    model: MODEL_NAME,
+    generationConfig: {
+      temperature: 0.9,
+      maxOutputTokens: 1500,
+      responseMimeType: 'application/json',
+    },
+  });
+
+  const genreContext = groqSuccess && genreIds.length > 0
+    ? `\n\nEXTRACTED GENRE IDS: [${genreIds.join(', ')}]
+    These genres were extracted from the user's vibe: ${genreIds.map(id => TMDB_GENRES[id]).join(', ')}
+    Use this as guidance, but prioritize narrative complexity and emotional resonance over strict genre matching.`
+    : '';
+
+  const prompt = `${fullSystemPrompt}
+
+USER CONTEXT:
+${userContext}
+
+CURRENT MOOD/REQUEST:
+"${vibe}"${genreContext}
+
+CRITICAL REQUIREMENTS:
+1. Return EXACTLY 3 to 5 unique movies - no more, no less
+2. Mix well-known cult classics with obscure deep cuts
+3. Each movie must be unique (no duplicates)
+4. Prioritize narrative complexity, emotional resonance, and visual storytelling
+5. NEVER include tmdb_id - we will verify separately
+
+Return ONLY valid JSON. NO text before or after. NO markdown formatting.
+
+Format:
+{
+  "recommendations": [
+    {
+      "title": "Exact Movie Title",
+      "year": 2023,
+      "rationale": "2-3 sentences explaining why this matches their mood, referencing specific directorial choices or cinematic techniques",
+      "vibeCheck": "5-7 word punchy tagline"
+    }
+  ]
+}`;
+
+  try {
+    const result = await model.generateContentStream(prompt);
+    const chunks = [];
+    for await (const chunk of result.stream) {
+      chunks.push(chunk.text());
+    }
+
+    const responseText = chunks.join('');
+    const cleanJson = responseText.replace(/```json\s*|\s*```/g, '').trim();
+    const parsed = JSON.parse(cleanJson);
+
+    if (!parsed || !Array.isArray(parsed.recommendations) || parsed.recommendations.length === 0) {
+      throw new Error('Invalid response format from Gemini');
+    }
+
+    return {
+      recommendations: parsed.recommendations,
+      _meta: {
+        groqUsed: groqSuccess,
+        genreIds: genreIds,
+        latency: groqSuccess ? `${Math.round(performance.now() - startTime)}ms` : 'fallback',
+      },
+    };
+  } catch (error) {
+    console.error('❌ Hybrid recommendation failed:', error.message);
     throw new Error('The Oracle is silent. Please try again.');
   }
 };

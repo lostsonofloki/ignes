@@ -25,13 +25,17 @@ Ignes is a React-based web application that lets you log, track, and visualize y
 - **Stats Dashboard**: Visualize your watching habits with Top Genres, Mood Breakdown, and Ratings Distribution charts
 
 ### 🤖 AI Features (Ember Oracle)
-- **Ember Oracle**: AI-powered film discovery with natural language vibe search
+- **Ember Oracle v2**: Multi-movie AI discovery with natural language vibe search
+- **Multi-Movie Recommendations**: Returns 3-5 curated films per query (cult classics + deep cuts)
+- **Hybrid AI Orchestration**: Groq LPU for fast genre extraction + Gemini for deep reasoning
+- **Sub-500ms Genre Parsing**: Ultra-fast vibe-to-genre translation via Groq's LPU hardware
 - **Mood Bubbles**: 6 quick-select presets (Cozy, Adrenaline, Mind-Bending, Deep Cuts, Noir, Euphoric)
-- **Reject & Reroll**: Reject unwanted suggestions and get instant alternatives
+- **Reject & Reroll**: Reject entire batch and get instant alternative recommendations
 - **Deep Cut Recommendations**: AI prioritizes obscure gems over mainstream blockbusters
-- **Rationale Display**: "Why Ignes Picked This" with specific cinematic analysis
-- **Vibe Check Tagline**: 5-7 word punchy essence descriptions
+- **Rationale Display**: "Why Ignes Picked This" with specific cinematic analysis for each film
+- **Vibe Check Tagline**: 5-7 word punchy essence descriptions per movie
 - **Session Tracking**: Tracks rejected movies to avoid repeat suggestions
+- **Concurrent Data Fetching**: All movie posters/data load in parallel for faster UX
 
 ### Advanced Features
 - **Mobile-First Responsive Navbar**: Hamburger menu (mobile) / Inline nav links (desktop 768px+)
@@ -55,7 +59,7 @@ Ignes is a React-based web application that lets you log, track, and visualize y
 | **Styling** | CSS Grid, Flexbox, Custom Components |
 | **External APIs** | TMDB (movie data, recommendations), OMDb (Rotten Tomatoes scores) |
 | **Backend/Database** | Supabase (Auth, PostgreSQL, RLS) |
-| **AI Integration** | Google Gemini API (smart recommendations) |
+| **AI Integration** | Google Gemini API + Groq LPU (hybrid orchestration for multi-movie recommendations) |
 | **Visualization** | Recharts (charts and graphs) |
 
 ---

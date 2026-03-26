@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { getSupabase, createSupabaseWithStorage } from '../supabaseClient';
 
 const UserContext = createContext(null);
+
+// Store the current supabase client reference
+let currentSupabase = null;
 
 /**
  * UserProvider - Provides user authentication state to the app
@@ -11,10 +14,18 @@ export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for existing session on mount
+  // Get the default supabase client on mount
   useEffect(() => {
+    try {
+      currentSupabase = getSupabase();
+    } catch (e) {
+      console.error('Failed to get Supabase client:', e);
+      setIsLoading(false);
+      return;
+    }
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    currentSupabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser({
           id: session.user.id,
@@ -26,7 +37,7 @@ export function UserProvider({ children }) {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = currentSupabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser({
           id: session.user.id,
@@ -44,8 +55,15 @@ export function UserProvider({ children }) {
 
   /**
    * Login function - signs in with Supabase Auth
+   * @param {string} email
+   * @param {string} password
+   * @param {boolean} rememberMe - Use localStorage (true) or sessionStorage (false)
    */
-  const login = async (email, password) => {
+  const login = async (email, password, rememberMe = true) => {
+    // Create supabase client with appropriate storage
+    const supabase = createSupabaseWithStorage(rememberMe);
+    currentSupabase = supabase;
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -68,7 +86,9 @@ export function UserProvider({ children }) {
    * Logout function - clears user session
    */
   const logout = async () => {
-    await supabase.auth.signOut();
+    if (currentSupabase) {
+      await currentSupabase.auth.signOut();
+    }
     setUser(null);
   };
 
@@ -76,7 +96,9 @@ export function UserProvider({ children }) {
    * Update user profile
    */
   const updateUser = async (updates) => {
-    const { error } = await supabase.auth.updateUser({
+    if (!currentSupabase) throw new Error('Supabase client not initialized');
+    
+    const { error } = await currentSupabase.auth.updateUser({
       data: { username: updates.username },
     });
 
