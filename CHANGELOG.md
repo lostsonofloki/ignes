@@ -7,7 +7,120 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## Latest Version: 1.4.1 (March 26, 2026)
+## Latest Version: 1.5.0 (March 26, 2026)
+
+**Highlights:**
+- 📦 **Magic Importer** - Bulk import entire movie lists from Letterboxd, notes, or any text format
+- 🤖 **AI-Powered Parsing** - Groq LPU extracts titles and years from messy text automatically
+- ✅ **TMDB Verification** - Auto-verifies all movies against TMDB before importing
+- 🎯 **Smart Deduplication** - Automatically skips movies you've already logged
+- 📋 **List Integration** - Option to add imported movies directly to custom lists
+
+**Quick Links:**
+- [Full v1.5.0 Notes](#150---march-26-2026)
+- [Previous: v1.4.1](#141---march-26-2026)
+- [Roadmap](./ROADMAP.md)
+- [README](./README.md)
+
+---
+
+## [1.5.0] - March 26, 2026
+
+### 🚀 Added
+
+#### Magic Importer - Bulk Movie Import System
+- **ArchiveImporterModal Component** - New 4-step modal workflow for bulk imports
+- **Step 1: Input** - Paste messy text from Letterboxd, notes, or any format
+- **Step 2: Verifying** - Auto-verify all parsed movies against TMDB in parallel
+- **Step 3: Review** - Select/deselect individual movies before importing
+- **Step 4: Complete** - Success screen with import statistics (saved/skipped/errors)
+
+#### AI-Powered Text Parsing
+- **`parseArchiveWithGroq()`** - New Groq LPU integration for intelligent text parsing
+- **Multi-Format Support**:
+  - Letterboxd exports: `"The Shawshank Redemption (1994) ★★★★☆"`
+  - Plain lists: `"Pulp Fiction, 1994"`
+  - Notes: `"Watched: Inception (2010) - loved it!"`
+  - Numbered lists: `"1. The Matrix (1999)"`
+  - Just titles: `"Blade Runner 2049"`
+- **Smart Extraction** - Ignores ratings, reviews, notes, and extra text
+- **JSON Output** - Returns clean `{title, year}` pairs for downstream processing
+
+#### TMDB Batch Verification
+- **`verifyBatchWithTMDB()`** - Parallel TMDB API calls for all parsed movies
+- **Promise.allSettled Pattern** - Handles partial failures gracefully
+- **Status Tracking** - Each movie tagged as `found`, `not_found`, or `error`
+- **Poster Preview** - Shows TMDB posters in review grid for visual confirmation
+
+#### Smart Import Options
+- **Watch Status Selector** - Import as "Watched" or "Want to Watch"
+- **List Integration** - Optional dropdown to add all imported movies to a custom list
+- **Duplicate Detection** - UPSERT with `onConflict: 'user_id, tmdb_id'` prevents duplicates
+- **Select All/Deselect All** - Quick actions for bulk selection
+
+### 🛠️ Changed
+
+#### Frontend (`src/pages/LibraryPage.jsx`)
+- **Magic Import Button** - Added "✨ Magic Import" button in library header
+- **Import Modal Integration** - `showImportModal` state and `ArchiveImporterModal` component
+- **Refresh Handler** - Library refreshes automatically after successful import
+
+#### New Files
+- **ArchiveImporterModal.jsx** - 4-step modal component with React Portal
+- **ArchiveImporterModal.css** - Deep Ember themed modal styling
+- **importer.js** - Utility module with Groq parsing and TMDB verification
+
+#### Backend (`src/utils/importer.js`)
+- **`parseArchiveWithGroq()`** - Groq API integration with system prompt engineering
+- **`verifyBatchWithTMDB()`** - Batch TMDB verification with error handling
+- **`batchSaveMovies()`** - Optimized single-request UPSERT for movie_logs table
+
+### ⚡ Performance
+
+#### Parallel Processing
+- **Groq Parsing** - ~300-600ms for typical lists (10-30 movies)
+- **TMDB Verification** - Parallel fetching reduces total time by 70-80%
+- **Batch Save** - Single network request vs. N individual inserts
+
+#### Deduplication Efficiency
+- **Database-Level** - `onConflict` constraint handles duplicates automatically
+- **No Pre-Checks Needed** - Eliminates need for separate existence queries
+- **Skipped Count Tracking** - Reports how many movies were already in library
+
+### 🎨 UI/UX
+
+#### Modal Design
+- **Step-by-Step Wizard** - Clear progression with visual feedback
+- **Review Grid** - Card-based layout with posters and parsed vs. TMDB titles
+- **Checkbox Selection** - Individual toggle with select/deselect all actions
+- **Loading States** - Spinner and progress indicators during verification
+- **Success Stats** - Post-import breakdown of saved/skipped/errors
+
+#### Deep Ember Theme
+- **Dark Zinc Backgrounds** - Consistent with app aesthetic
+- **Amber Accents** - Orange highlights for primary actions
+- **Status Indicators** - Red for not found, green for success
+- **Responsive Grid** - Multi-column layout for review cards
+
+### 📝 Documentation
+
+#### Updated Files
+- **CHANGELOG.md** - Comprehensive v1.5.0 release notes
+- **README.md** - Magic Importer feature documentation
+- **ROADMAP.md** - Bulk import marked as complete
+
+### 🐛 Fixed
+
+#### Bug Fixes
+- **Modal Portal Rendering** - Uses `createPortal` for proper z-index stacking
+- **Checkbox Event Bubbling** - `stopPropagation` prevents card click conflicts
+- **Empty State Handling** - Graceful handling of lists with no custom lists
+- **Year Parsing** - Handles "N/A" for movies without release years
+- **Poster Fallback** - Shows "No Poster" placeholder when TMDB has no image
+
+---
+
+## [1.4.1] - March 26, 2026
 
 **Highlights:**
 - 🧠 **Personalized Oracle** - AI now knows your ENTIRE movie history (zero duplicates guaranteed)

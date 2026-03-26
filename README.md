@@ -16,6 +16,11 @@ Ignes is a React-based web application that lets you log, track, and visualize y
 - **Personal Reviews**: Log movies with ratings, moods, reviews, and watch status
 - **My Library**: StoryGraph-style library with Watched/Want to Watch tabs and rich movie cards
 - **Custom Lists**: Create and manage personalized movie collections
+- **✨ Magic Importer**: Bulk import entire movie lists from Letterboxd, notes, or any text format
+  - AI-powered parsing with Groq LPU extracts titles and years automatically
+  - TMDB verification fetches official posters and metadata
+  - Smart deduplication skips movies you've already logged
+  - Optional list integration adds imported movies to custom collections
 - **Edit Reviews**: Click "Edit Log" to update your existing movie reviews
 - **Mood Palette**: Tag movies with 22 moods across 3 categories (Emotional, Vibe, Intellectual)
 - **Precision Rating Slider**: StoryGraph-style 0.0-5.0 rating with 0.1 increments
@@ -183,6 +188,7 @@ See [ROADMAP.md](./ROADMAP.md) for the detailed development plan.
 - ✅ **Reject & Reroll** (v1.3.5) - Reject suggestions and get alternatives
 - ✅ **Custom Lists** (v1.3.1) - User-created movie collections
 - ✅ **Remember Me** (v1.3.3) - Dynamic storage persistence toggle
+- ✅ **Magic Importer** (v1.5.0) - AI-powered bulk import for movie lists
 - ⬜ **The Matchmaker** - Social compatibility with mood overlaps
 - ⬜ **Social Sharing** - Share movie logs to social media
 

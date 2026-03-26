@@ -6,6 +6,7 @@ import { getSupabase } from '../supabaseClient';
 import LogMovieModal from '../components/LogMovieModal';
 import MovieCard from '../components/MovieCard';
 import CreateListModal from '../components/CreateListModal';
+import ArchiveImporterModal from '../components/ArchiveImporterModal';
 import './LibraryPage.css';
 
 const MOOD_CATEGORIES = {
@@ -61,6 +62,7 @@ function LibraryPage() {
   const [sortBy, setSortBy] = useState('date_newest');
   const [showCreateListModal, setShowCreateListModal] = useState(false);
   const [selectedList, setSelectedList] = useState(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -185,15 +187,28 @@ function LibraryPage() {
         {/* Header */}
         <div className="library-header">
           <h1>My Library</h1>
-          <button
-            className="create-list-btn"
-            onClick={() => setShowCreateListModal(true)}
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Create List
-          </button>
+          <div className="library-actions">
+            <button
+              className="btn-import"
+              onClick={() => setShowImportModal(true)}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              ✨ Magic Import
+            </button>
+            <button
+              className="create-list-btn"
+              onClick={() => setShowCreateListModal(true)}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Create List
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -405,6 +420,17 @@ function LibraryPage() {
         <CreateListModal
           onClose={() => setShowCreateListModal(false)}
           onCreateList={handleCreateList}
+        />
+      )}
+
+      {/* Archive Importer Modal */}
+      {showImportModal && (
+        <ArchiveImporterModal
+          onClose={() => setShowImportModal(false)}
+          onImportComplete={(stats) => {
+            console.log('📦 Import complete:', stats);
+            fetchMovies(); // Refresh library to show newly imported movies
+          }}
         />
       )}
     </div>

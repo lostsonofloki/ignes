@@ -55,16 +55,16 @@ function MovieCard({ movie, isLibraryCard = false, onEdit, onDelete }) {
 
           {/* Mobile: Always visible buttons | Desktop: Hover overlay */}
           <div className="absolute inset-0 bg-zinc-950/90 backdrop-blur-md transition-all duration-300 opacity-0 group-hover:opacity-100 flex items-center justify-center pointer-events-none group-hover:pointer-events-auto md:flex">
-            <div className="flex flex-col items-center gap-4 px-6">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col items-center gap-3 px-4 w-full">
+              <div className="flex items-center gap-2 flex-wrap justify-center">
                 {isLibraryCard ? (
                   <>
                     <button
                       onClick={(e) => handleActionClick(e, 'edit')}
-                      className="p-4 bg-zinc-900/90 hover:bg-orange-600 rounded-2xl transition-all duration-200 group/btn shadow-xl border border-zinc-800 hover:border-orange-400 min-w-[44px] min-h-[44px]"
+                      className="p-3 bg-zinc-900/90 hover:bg-orange-600 rounded-xl transition-all duration-200 group/btn shadow-xl border border-zinc-800 hover:border-orange-400 min-w-[40px] min-h-[40px] flex items-center justify-center"
                       title="Edit Log"
                     >
-                      <svg className="w-6 h-6 text-zinc-400 group-hover/btn:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg className="w-5 h-5 text-zinc-400 group-hover/btn:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
                         <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                       </svg>
@@ -81,10 +81,10 @@ function MovieCard({ movie, isLibraryCard = false, onEdit, onDelete }) {
 
                     <button
                       onClick={(e) => handleActionClick(e, 'delete')}
-                      className="p-4 bg-zinc-900/90 hover:bg-red-600 rounded-2xl transition-all duration-200 group/btn shadow-xl border border-zinc-800 hover:border-red-400 min-w-[44px] min-h-[44px]"
+                      className="p-3 bg-zinc-900/90 hover:bg-red-600 rounded-xl transition-all duration-200 group/btn shadow-xl border border-zinc-800 hover:border-red-400 min-w-[40px] min-h-[40px] flex items-center justify-center"
                       title="Delete"
                     >
-                      <svg className="w-6 h-6 text-zinc-400 group-hover/btn:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg className="w-5 h-5 text-zinc-400 group-hover/btn:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
                       </svg>
                     </button>
@@ -105,10 +105,10 @@ function MovieCard({ movie, isLibraryCard = false, onEdit, onDelete }) {
                         e.stopPropagation();
                         setShowModal(true);
                       }}
-                      className="p-4 bg-zinc-900/90 hover:bg-orange-600 rounded-2xl transition-all duration-200 group/btn shadow-xl border border-zinc-800 hover:border-orange-400 min-w-[44px] min-h-[44px]"
+                      className="p-3 bg-zinc-900/90 hover:bg-orange-600 rounded-xl transition-all duration-200 group/btn shadow-xl border border-zinc-800 hover:border-orange-400 min-w-[40px] min-h-[40px] flex items-center justify-center"
                       title="Log Movie"
                     >
-                      <svg className="w-6 h-6 text-zinc-400 group-hover/btn:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg className="w-5 h-5 text-zinc-400 group-hover/btn:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M12 5v14M5 12h14" />
                       </svg>
                     </button>
@@ -116,7 +116,7 @@ function MovieCard({ movie, isLibraryCard = false, onEdit, onDelete }) {
                 )}
               </div>
 
-              <p className="text-white font-semibold text-center text-sm line-clamp-2 max-w-[200px]">
+              <p className="text-white font-semibold text-center text-xs line-clamp-2 max-w-[180px]">
                 {movie.title}
               </p>
             </div>

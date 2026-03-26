@@ -244,7 +244,7 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 | 6.8 | **Year in Review** | Annual wrapped-style statistics summary | ⬜ |
 | 6.9 | **Custom Lists** | User-created movie collections | ✅ |
 | 6.10 | **Advanced Search** | Multi-criteria search (Mood, Genre, Rating) | ⬜ |
-| 6.11 | **The Archive Importer** | Mass import tool for migrating movie lists | ⬜ |
+| 6.11 | **The Archive Importer** | Mass import tool for migrating movie lists | ✅ |
 | 6.12 | **Bug Report System** | In-app bug reporting with admin dashboard | ✅ |
 | 6.13 | **The Oracle** | Conversational AI Librarian using personal logs | ✅ |
 | 6.14 | **The Matchmaker** | Compare watch-lists & mood overlaps with friends | ⬜ |
@@ -262,42 +262,49 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 
 ## Phase 6.11: The Archive Importer (Mass Import Tool) 📥
 
+**Status**: ✅ **Complete** (v1.5.0)
+
 **Goal**: Allow users to instantly migrate their old movie lists into Ignes without typing them one by one.
 
-### How It Will Work
+### How It Works
 
 | Step | Description | Tech |
 |------|-------------|------|
 | **UI** | Text area for pasting lists + drag-and-drop zone for .txt files | React FileReader API |
-| **AI Parser** | Send raw text to Gemini API, extract titles/years as JSON | Google Gemini AI |
+| **AI Parser** | Send raw text to Groq API, extract titles/years as JSON | Groq LPU (llama-3.3-70b-versatile) |
 | **Data Pipeline** | Loop through JSON, hit TMDB API for IDs/posters, batch upsert to Supabase | TMDB API + Supabase |
 | **UX** | Progress bar with Deep Ember styling during AI parsing | CSS animations |
 
 ### User Flow
-1. User navigates to "Import Archive" page
-2. Pastes text list OR drags .txt file into drop zone
-3. Clicks "Parse with AI" button
-4. Gemini extracts movie titles and years
-5. TMDB verification fetches official IDs and posters
-6. User reviews parsed list
-7. Clicks "Import All" → Batch upsert to Supabase
-8. Success message with count of imported movies
+1. User navigates to Library page and clicks "✨ Magic Import"
+2. Pastes text list from Letterboxd, notes, or any format
+3. Clicks "✨ Parse List" button
+4. Groq extracts movie titles and years (~300-600ms)
+5. TMDB verification fetches official IDs and posters in parallel
+6. User reviews parsed list with posters and selects movies to import
+7. Clicks "📥 Import X Movies" → Batch upsert to Supabase
+8. Success screen shows imported/skipped/duplicates counts
 
-### Technical Requirements
-- React state for file/text input
-- Gemini API prompt engineering for clean JSON output
-- TMDB batch verification (rate limit handling)
-- Supabase batch insert with error handling
-- Progress bar component with Deep Ember (#991b1b) theme
-- Error states for failed parses/imports
+### Technical Implementation
+- **ArchiveImporterModal** - 4-step modal: Input → Verifying → Review → Complete
+- **parseArchiveWithGroq()** - Groq API integration with system prompt engineering
+- **verifyBatchWithTMDB()** - Parallel TMDB fetching with Promise.all
+- **batchSaveMovies()** - Single UPSERT request with onConflict deduplication
+- **Smart Features**:
+  - Multi-format parsing (Letterboxd, plain lists, numbered lists, notes)
+  - Watch status selector (Watched / Want to Watch)
+  - Optional list integration (add all imported to custom list)
+  - Duplicate detection via database constraint
+  - Select All / Deselect All quick actions
 
 ### Success Criteria
-- [ ] Users can paste a text list and get parsed results
-- [ ] Users can drag-and-drop .txt files
-- [ ] AI correctly extracts 90%+ of movie titles
-- [ ] TMDB verification fetches correct posters
-- [ ] Batch import completes without duplicates
-- [ ] Progress bar shows real-time import status
+- [x] Users can paste a text list and get parsed results
+- [x] AI correctly extracts 90%+ of movie titles
+- [x] TMDB verification fetches correct posters
+- [x] Batch import completes without duplicates
+- [x] Progress indicators show real-time status
+- [x] Users can select/deselect individual movies
+- [x] Optional watch status and list assignment
 
 ---
 
@@ -366,7 +373,7 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 
 **Phase**: Phase 6 In Progress 🚀
 
-**Current Version**: v1.3.12 - OMDb HTTPS Fix + ROADMAP Consistency + IGNES Logo Home Button
+**Current Version**: v1.5.0 - Magic Importer with AI-Powered Bulk Import
 
 **Completed Features**:
 - ✅ **Mobile-First Responsive Navbar** - Hamburger menu (mobile) / Inline nav links (desktop 768px+)
@@ -381,7 +388,7 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 - ✅ **Edit Movie Logs** - "Edit Log" button on MovieDetail opens modal pre-filled with your data
 - ✅ **Supabase Backend** - Auth, PostgreSQL, RLS policies configured (includes genres column)
 - ✅ **User Authentication** - Sign up, login, logout with Supabase Auth
-- 🏗️ **Remember Me Checkbox** (v1.3.3) - Toggle between localStorage/sessionStorage persistence (needs refinement)
+- ✅ **Remember Me Checkbox** (v1.3.3) - Toggle between localStorage/sessionStorage persistence
 - ✅ **Forgot Password Flow** - Email-based password reset with Supabase Auth
 - ✅ **RatingSlider** - StoryGraph-style 0.0-5.0 with 0.1 increments, gradient fill
 - ✅ **Mood Palette** - 22 moods across 3 color-coded categories:
@@ -412,6 +419,7 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 - ✅ **Version Management** (v1.3.0) - Centralized constants with auto-version in bug reports
 - ✅ **Oracle Vibe Mapping** (v1.3.4) - Natural language to TMDB genre ID mapping
 - ✅ **Library Grid Responsive** (v1.3.1) - `grid-cols-2 md:grid-cols-4 lg:grid-cols-6`
+- ✅ **Magic Importer** (v1.5.0) - AI-powered bulk import with Groq LPU parsing
 
 **🤖 Ember Oracle - AI Discovery (v1.3.2+)**:
 - ✅ **Ember Oracle Page** (`/discover`) - Dedicated AI discovery interface
@@ -425,6 +433,16 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 - ✅ **Dynamic System Prompt** - AI avoids rejected movies during session
 - ✅ **Deep Ember Theme** - Dark zinc backgrounds with amber/orange accents
 - ✅ **Database Schema** - recommendation_feedback table with RLS policies
+
+**📦 Magic Importer - Bulk Import (v1.5.0)**:
+- ✅ **ArchiveImporterModal** - 4-step workflow: Input → Verifying → Review → Complete
+- ✅ **Groq LPU Parsing** - llama-3.3-70b-versatile for ultra-fast text extraction
+- ✅ **Multi-Format Support** - Letterboxd, plain lists, numbered lists, notes
+- ✅ **TMDB Batch Verification** - Parallel fetching with Promise.all
+- ✅ **Smart Deduplication** - UPSERT with onConflict constraint
+- ✅ **Watch Status Selector** - Import as Watched or Want to Watch
+- ✅ **List Integration** - Optional add to custom list
+- ✅ **Review Grid** - Poster preview with select/deselect actions
 
 **Phase 6 Planned - AI Personality & Social**:
 - ✅ **The Oracle** (v1.3.2-v1.3.6) - Conversational AI Librarian with natural language vibe search

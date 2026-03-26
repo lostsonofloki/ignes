@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getSupabase, createSupabaseWithStorage } from '../supabaseClient';
+import { getSupabase } from '../supabaseClient';
 
 const UserContext = createContext(null);
 
@@ -37,8 +37,23 @@ export function UserProvider({ children }) {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = currentSupabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
+    const { data: { subscription } } = currentSupabase.auth.onAuthStateChange((event, session) => {
+      // Check if this is a temporary (non-remembered) session
+      const isTemporary = window.sessionStorage.getItem('ignes_temp_session') === 'true';
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          username: session.user.user_metadata?.username || session.user.email?.split('@')[0],
+        });
+        if (isTemporary) {
+          console.log('🔐 Temporary session active (will expire on tab close)');
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        window.sessionStorage.removeItem('ignes_temp_session');
+      } else if (session?.user) {
         setUser({
           id: session.user.id,
           email: session.user.email,
@@ -60,13 +75,16 @@ export function UserProvider({ children }) {
    * @param {boolean} rememberMe - Use localStorage (true) or sessionStorage (false)
    */
   const login = async (email, password, rememberMe = true) => {
-    // Create supabase client with appropriate storage
-    const supabase = createSupabaseWithStorage(rememberMe);
-    currentSupabase = supabase;
+    const supabase = getSupabase();
 
+    // Use persistSession option to control session persistence
+    // If rememberMe is false, session will be cleared when browser/tab closes
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: {
+        persistSession: rememberMe
+      }
     });
 
     if (error) throw error;
@@ -77,6 +95,13 @@ export function UserProvider({ children }) {
         email: data.user.email,
         username: data.user.user_metadata?.username || data.user.email?.split('@')[0],
       });
+
+      // Store flag for temporary session tracking
+      if (!rememberMe) {
+        window.sessionStorage.setItem('ignes_temp_session', 'true');
+      } else {
+        window.sessionStorage.removeItem('ignes_temp_session');
+      }
     }
 
     return { success: true };
