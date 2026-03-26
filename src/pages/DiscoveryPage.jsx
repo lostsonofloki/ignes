@@ -337,6 +337,21 @@ function DiscoveryPage() {
                     if (!tmdbData || !user?.id) return;
                     try {
                       const supabase = getSupabase();
+                      
+                      // Check if already in watchlist
+                      const { data: existing } = await supabase
+                        .from('movie_logs')
+                        .select('id')
+                        .eq('user_id', user.id)
+                        .eq('tmdb_id', tmdbData.id)
+                        .eq('watch_status', 'to-watch')
+                        .maybeSingle();
+
+                      if (existing) {
+                        toast.info('Already in Watchlist');
+                        return;
+                      }
+
                       const { error } = await supabase.from('movie_logs').insert({
                         user_id: user.id,
                         tmdb_id: tmdbData.id,
