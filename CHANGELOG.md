@@ -7,21 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## Latest Version: 1.3.9 (March 25, 2026)
+## Latest Version: 1.3.10 (March 26, 2026)
 
 **Highlights:**
 - 🔍 Mobile search moved to header (no longer in hamburger menu)
 - 🧭 Search icon toggles full-width input on mobile
 - ⌨️ Form submit only - no navigation on keystroke
 - 🤖 Ember Oracle library integration (Watched, Watchlist, Add to List buttons)
+- 🏠 IGNES logo now acts as home button
 - 🎯 DiscoveryPage textarea uses controlled input pattern
 - 🚀 Dev server runs on port 3000
 
 **Quick Links:**
-- [Full v1.3.9 Notes](#139---march-25-2026)
-- [v1.3.8 Notes](#138---march-24-2026)
+- [Full v1.3.10 Notes](#1310---march-25-2026)
+- [v1.3.9 Notes](#139---march-25-2026)
 - [Roadmap](./ROADMAP.md)
 - [README](./README.md)
+
+---
+
+## [1.3.10] - March 26, 2026
+
+### 🐛 Fixed
+
+#### IGNES Logo Home Button
+- **Mobile Logo Now Clickable** - Wrapped in Link to navigate to home (/)
+- **Consistent Behavior** - Both mobile and desktop logos now act as home buttons
 
 ---
 
