@@ -31,7 +31,7 @@ function MovieCard({ movie, isLibraryCard = false, onEdit, onDelete }) {
   return (
     <>
       <div
-        className="group relative bg-zinc-950 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-orange-900/20"
+        className="group relative bg-zinc-950 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:shadow-orange-900/30"
         onClick={handleCardClick}
       >
         <div className="aspect-[2/3] relative overflow-hidden bg-zinc-900">
@@ -39,7 +39,7 @@ function MovieCard({ movie, isLibraryCard = false, onEdit, onDelete }) {
             src={posterSrc}
             alt={`${movie.title} poster`}
             loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-70 group-hover:opacity-90 transition-opacity duration-300" />

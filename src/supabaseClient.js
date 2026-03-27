@@ -4,30 +4,6 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.REACT_APP_SUPABASE_ANON_KEY;
 
-// Debug logs to help troubleshoot connection issues
-console.log('=== Supabase Configuration ===');
-console.log('Supabase URL:', supabaseUrl ? '✅ Found' : '❌ Undefined');
-console.log('Supabase Anon Key:', supabaseAnonKey ? '✅ Found' : '❌ Undefined');
-console.log('Supabase Connected:', !!supabaseUrl && !!supabaseAnonKey);
-
-// Log URL for verification (safe to log)
-if (supabaseUrl) {
-  console.log('URL Value:', supabaseUrl);
-} else {
-  console.error('❌ Supabase URL is missing! Check your .env file for VITE_SUPABASE_URL');
-  console.log('Current .env location:', import.meta.env);
-}
-
-// Log key prefix only (never log full key)
-if (supabaseAnonKey) {
-  console.log('Anon Key Prefix:', supabaseAnonKey.substring(0, 30) + '...');
-  console.log('Key Length:', supabaseAnonKey.length);
-} else {
-  console.error('❌ Supabase Anon Key is missing! Check your .env file for VITE_SUPABASE_ANON_KEY');
-}
-
-console.log('================================');
-
 // Custom storage wrapper for dynamic persistence (localStorage vs sessionStorage)
 class SupabaseStorageAdapter {
   constructor(useLocalStorage = true) {
@@ -61,23 +37,12 @@ if (supabaseUrl && supabaseAnonKey) {
         storage: new SupabaseStorageAdapter(true), // Default: localStorage
       },
     });
-    console.log('✅ Supabase client initialized successfully');
-
-    // Test the connection
-    supabase.auth.getSession().then(({ error }) => {
-      if (error) {
-        console.error('⚠️ Supabase auth session error:', error.message);
-      } else {
-        console.log('✅ Supabase auth connection OK');
-      }
-    });
   } catch (error) {
-    console.error('❌ Failed to initialize Supabase client:', error.message);
-    console.error('This usually means your API key is invalid or malformed');
+    console.error('Failed to initialize Supabase client:', error.message);
     supabase = null;
   }
 } else {
-  console.warn('⚠️ Supabase client not initialized - missing configuration');
+  console.warn('Supabase client not initialized - missing configuration');
   console.warn('Please check your .env file and restart the dev server');
 }
 

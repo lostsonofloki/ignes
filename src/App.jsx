@@ -22,8 +22,6 @@ import DiscoveryPage from './pages/DiscoveryPage';
 import { useState } from 'react';
 import './App.css';
 
-console.log('--- APP IS USING THE NEW CODE ---');
-
 const VIBE_MAP = {
   dark: [80, 53],
   comedy: [35],
@@ -367,23 +365,25 @@ function AppContent() {
     <div className="app">
       {!isAuthPage && <Header onOracleClick={() => setIsOracleOpen(true)} />}
       <main className="app-main">
-        <Routes>
-          <Route path="/" element={<TrendingMovies />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/movie/:id" element={<MovieDetail />} />
-          <Route path="/actor/:id" element={<ActorPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/update-password" element={<UpdatePasswordPage />} />
-          <Route path="/library" element={<LibraryPage />} />
-          <Route path="/history" element={<WatchHistory />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/changelog" element={<ChangelogPage />} />
-          <Route path="/admin/bugs" element={<BugList />} />
-          <Route path="/discover" element={<ProtectedRoute><DiscoveryPage /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <div className="main-content">
+          <Routes>
+            <Route path="/" element={<TrendingMovies />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/movie/:id" element={<MovieDetail />} />
+            <Route path="/actor/:id" element={<ActorPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/update-password" element={<UpdatePasswordPage />} />
+            <Route path="/library" element={<LibraryPage />} />
+            <Route path="/history" element={<WatchHistory />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/changelog" element={<ChangelogPage />} />
+            <Route path="/admin/bugs" element={<BugList />} />
+            <Route path="/discover" element={<ProtectedRoute><DiscoveryPage /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
       </main>
       <Footer />
       <OracleOverlay isOpen={isOracleOpen} onClose={() => setIsOracleOpen(false)} onOracleSearch={handleOracleSearch} />

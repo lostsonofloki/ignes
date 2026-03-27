@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import IgnesLogo from './IgnesLogo';
 import './Header.css';
@@ -10,10 +10,13 @@ import './Header.css';
  */
 function Header({ onOracleClick }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated, logout } = useUser();
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [tempSearch, setTempSearch] = useState('');
+
+  const isActive = (path) => location.pathname === path;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -78,10 +81,10 @@ function Header({ onOracleClick }) {
           </Link>
 
           <nav className="desktop-nav">
-            <Link to="/discover" className="nav-link discover">Discover</Link>
-            <Link to="/" className="nav-link">Trending</Link>
-            <Link to="/library" className="nav-link">Library</Link>
-            <Link to="/history" className="nav-link">History</Link>
+            <Link to="/discover" className={`nav-link discover ${isActive('/discover') ? 'active' : ''}`}>Discover</Link>
+            <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>Trending</Link>
+            <Link to="/library" className={`nav-link ${isActive('/library') ? 'active' : ''}`}>Library</Link>
+            <Link to="/history" className={`nav-link ${isActive('/history') ? 'active' : ''}`}>History</Link>
           </nav>
         </div>
 
@@ -146,10 +149,10 @@ function Header({ onOracleClick }) {
       {isMobileMenuOpen && (
         <div className="mobile-menu">
           <nav className="mobile-nav">
-            <Link to="/discover" className="mobile-nav-link discover" onClick={() => setIsMobileMenuOpen(false)}>Discover</Link>
-            <Link to="/" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>Trending</Link>
-            <Link to="/library" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>Library</Link>
-            <Link to="/history" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>History</Link>
+            <Link to="/discover" className={`mobile-nav-link discover ${isActive('/discover') ? 'active' : ''}`} onClick={() => setIsMobileMenuOpen(false)}>Discover</Link>
+            <Link to="/" className={`mobile-nav-link ${isActive('/') ? 'active' : ''}`} onClick={() => setIsMobileMenuOpen(false)}>Trending</Link>
+            <Link to="/library" className={`mobile-nav-link ${isActive('/library') ? 'active' : ''}`} onClick={() => setIsMobileMenuOpen(false)}>Library</Link>
+            <Link to="/history" className={`mobile-nav-link ${isActive('/history') ? 'active' : ''}`} onClick={() => setIsMobileMenuOpen(false)}>History</Link>
             <button onClick={onOracleClick} className="mobile-oracle-btn" onClick={() => setIsMobileMenuOpen(false)}>✨ Oracle</button>
             
             {isAuthenticated ? (

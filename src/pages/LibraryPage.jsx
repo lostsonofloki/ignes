@@ -7,6 +7,7 @@ import LogMovieModal from '../components/LogMovieModal';
 import MovieCard from '../components/MovieCard';
 import CreateListModal from '../components/CreateListModal';
 import ArchiveImporterModal from '../components/ArchiveImporterModal';
+import { MovieGridSkeleton } from '../components/Skeleton';
 import { runPosterMigration } from '../utils/posterMigration';
 import './LibraryPage.css';
 
@@ -222,14 +223,6 @@ function LibraryPage() {
               ✨ Magic Import
             </button>
             <button
-              className="btn-secondary"
-              onClick={handleRefreshPosters}
-              disabled={isMigratingPosters}
-              style={{ opacity: isMigratingPosters ? 0.5 : 1 }}
-            >
-              {isMigratingPosters ? '⏳ Refreshing...' : '🖼️ Refresh Posters'}
-            </button>
-            <button
               className="create-list-btn"
               onClick={() => setShowCreateListModal(true)}
             >
@@ -237,6 +230,14 @@ function LibraryPage() {
                 <path d="M12 5v14M5 12h14" />
               </svg>
               Create List
+            </button>
+            <button
+              className="btn-secondary"
+              onClick={handleRefreshPosters}
+              disabled={isMigratingPosters}
+              style={{ opacity: isMigratingPosters ? 0.5 : 1 }}
+            >
+              {isMigratingPosters ? '⏳ Refreshing...' : '🖼️ Refresh Posters'}
             </button>
           </div>
         </div>
@@ -408,7 +409,7 @@ function LibraryPage() {
 
             {/* Movie Grid */}
             {isLoading ? (
-              <div className="loading">Loading your library...</div>
+              <MovieGridSkeleton count={12} />
             ) : error ? (
               <div className="error">{error}</div>
             ) : sortedMovies.length === 0 ? (

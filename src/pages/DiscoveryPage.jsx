@@ -300,10 +300,6 @@ function DiscoveryPage() {
           </div>
         )}
 
-        {console.log('=== DISCOVERY RENDER DEBUG ===')}
-        {console.log('recommendations:', recommendations)}
-        {console.log('tmdbResults:', tmdbResults)}
-        {console.log('userLists:', userLists)}
         {recommendations.length > 0 && (
           <div className="recommendations-list">
             {recommendations.map((rec, index) => {

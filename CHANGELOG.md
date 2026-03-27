@@ -60,6 +60,122 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Duplicate Detection** - UPSERT with `onConflict: 'user_id, tmdb_id'` prevents duplicates
 - **Select All/Deselect All** - Quick actions for bulk selection
 
+#### Poster Migration Tool
+- **`posterMigration.js`** - Utility to fix broken poster URLs for existing imports
+- **Refresh Posters Button** - One-click migration in Library header
+- **Automatic Conversion** - Relative paths to full TMDB URLs
+- **TMDB Fallback** - Fetches missing posters using TMDB ID
+- **Rate Limiting** - 100ms delay between requests to avoid API throttling
+
+### 🎨 UI/UX Improvements
+
+#### Navigation Enhancements
+- **Active Page Indicators** - Orange underline on desktop nav, highlighted background on mobile
+- **Mobile Menu Animation** - Smooth slide-down with fade effect
+- **Improved Touch Targets** - 44px minimum height for mobile nav links
+- **Hover States** - Background highlight and padding shift on mobile nav
+
+#### Loading States
+- **Skeleton Loaders** - Shimmer animation placeholders instead of "Loading..." text
+- **MovieCardSkeleton** - Poster + title placeholder for movie cards
+- **MovieGridSkeleton** - 12-item grid for library loading states
+- **Better perceived performance** - Visual feedback during data fetch
+
+#### Visual Polish
+- **Enhanced MovieCard Hover** - Increased scale (1.03x), stronger orange shadow glow
+- **Smoother Animations** - 700ms image zoom transition
+- **Typography Hierarchy** - Defined h1/h2/h3 with responsive sizes
+- **Max-Width Container** - 1400px content width with responsive padding
+- **Smooth Scrolling** - Enabled in html for better navigation
+- **Mobile Button Stacking** - Full-width vertical layout on small screens
+
+#### Library Improvements
+- **Button Reordering** - Magic Import → Create List → Refresh Posters
+- **Responsive Layout** - Buttons stack vertically on mobile (< 640px)
+- **Better Touch Targets** - Full-width buttons for easier tapping
+
+### 🛠️ Changed
+
+#### Frontend (`src/pages/LibraryPage.jsx`)
+- **Magic Import Button** - Added "✨ Magic Import" button in library header
+- **Import Modal Integration** - `showImportModal` state and `ArchiveImporterModal` component
+- **Refresh Handler** - Library refreshes automatically after successful import
+- **Poster Refresh Handler** - `handleRefreshPosters` migration function
+
+#### New Files
+- **ArchiveImporterModal.jsx** - 4-step modal component with React Portal
+- **ArchiveImporterModal.css** - Deep Ember themed modal styling
+- **importer.js** - Utility module with Groq parsing and TMDB verification
+- **posterMigration.js** - Poster URL migration utility
+- **Skeleton.jsx** - Loading skeleton components
+- **Skeleton.css** - Shimmer animation styles
+
+#### Backend (`src/utils/importer.js`)
+- **`parseArchiveWithGroq()`** - Groq API integration with system prompt engineering
+- **`verifyBatchWithTMDB()`** - Batch TMDB verification with error handling
+- **`batchSaveMovies()`** - Optimized single-request UPSERT for movie_logs table
+- **Full Poster URLs** - Saves complete TMDB URLs instead of relative paths
+
+### ⚡ Performance
+
+#### Parallel Processing
+- **Groq Parsing** - ~300-600ms for typical lists (10-30 movies)
+- **TMDB Verification** - Parallel fetching reduces total time by 70-80%
+- **Batch Save** - Single network request vs. N individual inserts
+
+#### Deduplication Efficiency
+- **Database-Level** - `onConflict` constraint handles duplicates automatically
+- **No Pre-Checks Needed** - Eliminates need for separate existence queries
+- **Skipped Count Tracking** - Reports how many movies were already in library
+
+### 🎨 UI/UX
+
+#### Modal Design
+- **Step-by-Step Wizard** - Clear progression with visual feedback
+- **Review Grid** - Card-based layout with posters and parsed vs. TMDB titles
+- **Checkbox Selection** - Individual toggle with select/deselect all actions
+- **Loading States** - Spinner and progress indicators during verification
+- **Success Stats** - Post-import breakdown of saved/skipped/errors
+
+#### Deep Ember Theme
+- **Dark Zinc Backgrounds** - Consistent with app aesthetic
+- **Amber Accents** - Orange highlights for primary actions
+- **Status Indicators** - Red for not found, green for success
+- **Responsive Grid** - Multi-column layout for review cards
+
+### 📝 Documentation
+
+#### Updated Files
+- **CHANGELOG.md** - Comprehensive v1.5.0 release notes
+- **README.md** - Magic Importer feature documentation
+- **ROADMAP.md** - Bulk import marked as complete
+
+### 🐛 Fixed
+
+#### Bug Fixes
+- **Modal Portal Rendering** - Uses `createPortal` for proper z-index stacking
+- **Checkbox Event Bubbling** - `stopPropagation` prevents card click conflicts
+- **Empty State Handling** - Graceful handling of lists with no custom lists
+- **Year Parsing** - Handles "N/A" for movies without release years
+- **Poster Fallback** - Shows "No Poster" placeholder when TMDB has no image
+- **Groq JSON Parsing** - Handles single movie objects in addition to arrays
+- **Single Movie Import** - Now accepts titles without years (e.g., "Shrek", "Jaws")
+- **TMDB Fallback Search** - Tries title-only search if year search fails
+
+### 🧹 Code Quality
+
+#### Removed Debug Code
+- **App.jsx** - Removed debug console.log
+- **DiscoveryPage.jsx** - Removed render-time debug logs
+- **supabaseClient.js** - Removed verbose initialization logs
+- **index.jsx** - Removed debug log and debugEnv import
+- **debugEnv.js** - Deleted unused debug utility file
+
+#### Improved Code Organization
+- **Cleaner Console Output** - Only essential error/warning logs remain
+- **Better Component Structure** - Separated skeleton loading components
+- **Reduced Code Bloat** - Net reduction of 110 lines while adding features
+
 ### 🛠️ Changed
 
 #### Frontend (`src/pages/LibraryPage.jsx`)

@@ -28,6 +28,19 @@
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .library-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .library-actions button {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .btn-import {
