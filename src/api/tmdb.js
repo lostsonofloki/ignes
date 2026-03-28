@@ -49,7 +49,16 @@ export const discoverMovies = async (genreId = '', sortBy = 'popularity.desc', y
       url += `&with_original_language=${withOriginalLanguage}`;
     }
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
 
     if (data.results) {
@@ -80,8 +89,18 @@ export const discoverAnime = async (sortBy = 'popularity.desc', year = '') => {
 export const getTrendingMovies = async (timeWindow = 'week') => {
   try {
     const response = await fetch(
-      `${BASE_URL}/trending/movie/${timeWindow}?api_key=${API_KEY}&include_adult=false`
+      `${BASE_URL}/trending/movie/${timeWindow}?api_key=${API_KEY}&include_adult=false`,
+      {
+        headers: {
+          'Accept': 'application/json',
+        },
+      }
     );
+    
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
 
     if (data.results) {
@@ -102,8 +121,18 @@ export const getTrendingMovies = async (timeWindow = 'week') => {
 export const getMovieDetails = async (tmdbId) => {
   try {
     const response = await fetch(
-      `${BASE_URL}/movie/${tmdbId}?api_key=${API_KEY}&append_to_response=credits,videos,recommendations,similar`
+      `${BASE_URL}/movie/${tmdbId}?api_key=${API_KEY}&append_to_response=credits,videos,recommendations,similar`,
+      {
+        headers: {
+          'Accept': 'application/json',
+        },
+      }
     );
+    
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
     return data;
   } catch (error) {
@@ -120,8 +149,18 @@ export const getMovieDetails = async (tmdbId) => {
 export const searchMovies = async (query) => {
   try {
     const response = await fetch(
-      `${BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false`
+      `${BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}&include_adult=false`,
+      {
+        headers: {
+          'Accept': 'application/json',
+        },
+      }
     );
+    
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
 
     if (data.results) {
@@ -142,8 +181,18 @@ export const searchMovies = async (query) => {
 export const getRecommendations = async (tmdbId) => {
   try {
     const response = await fetch(
-      `${BASE_URL}/movie/${tmdbId}/recommendations?api_key=${API_KEY}&include_adult=false`
+      `${BASE_URL}/movie/${tmdbId}/recommendations?api_key=${API_KEY}&include_adult=false`,
+      {
+        headers: {
+          'Accept': 'application/json',
+        },
+      }
     );
+    
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
 
     if (data.results) {
@@ -197,10 +246,20 @@ export const getProfileUrl = (path, size = 'w185') => {
 export const fetchWatchProviders = async (tmdbId) => {
   try {
     const response = await fetch(
-      `${BASE_URL}/movie/${tmdbId}/watch/providers?api_key=${API_KEY}`
+      `${BASE_URL}/movie/${tmdbId}/watch/providers?api_key=${API_KEY}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+        },
+      }
     );
-    const data = await response.json();
     
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+
     // Return US region data if available
     return data?.results?.US || null;
   } catch (error) {

@@ -7,19 +7,114 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## Latest Version: 1.6.0 (March 28, 2026)
+## Latest Version: 1.7.0 (March 28, 2026)
 
 **Highlights:**
-- 📺 **Where to Watch** - See streaming providers for any movie
-- 🎬 **Provider Logos** - Netflix, Hulu, Prime, Apple TV+ and more
-- 💰 **Rent/Buy Options** - Fallback shows rental/purchase options if not streaming
-- 🔍 **Deduplicated Providers** - Smart filtering removes duplicate entries
+- 🔧 **API Reliability** - Fixed 406 errors with proper Accept headers
+- 👁️ **Quick Watchlist** - One-click toggle for watchlist status
+- 🎬 **Three-Button Layout** - Clear separation: Watchlist / Log Movie / Add to List
+- 📱 **Mobile Responsive** - Buttons stack vertically on small screens
 
 **Quick Links:**
-- [Full v1.6.0 Notes](#160---march-28-2026)
-- [Previous: v1.5.1](#151---march-26-2026)
+- [Full v1.7.0 Notes](#170---march-28-2026)
+- [Previous: v1.6.0](#160---march-28-2026)
 - [Roadmap](./ROADMAP.md)
 - [README](./README.md)
+
+---
+
+## [1.7.0] - March 28, 2026
+
+### 🐛 Fixed
+
+#### Bug 1: HTTP 406 Not Acceptable Error
+- **Root Cause**: TMDB API requests missing proper Accept header
+- **Fix**: Added `Accept: application/json` header to all TMDB fetch calls
+- **Affected Functions**:
+  - `getMovieDetails()` - Movie detail pages
+  - `searchMovies()` - Search functionality
+  - `getTrendingMovies()` - Trending movies homepage
+  - `getRecommendations()` - Related movies on detail page
+  - `discoverMovies()` - Discovery/filter functionality
+  - `fetchWatchProviders()` - Where to Watch section
+- **Error Handling**: Added `response.ok` checks with descriptive error messages
+
+#### Bug 2: Watchlist vs Custom List Confusion
+- **Problem**: Users confused about where movies were being saved
+- **Solution**: Separated actions into three distinct buttons with clear icons and labels
+
+### 🚀 Added
+
+#### Quick Watchlist Toggle
+- **Eye Icon Button**: Visual indicator with eye icon
+- **One-Click Toggle**: Adds/removes movie from watchlist instantly
+- **Active State**: Button highlights when movie is in watchlist
+- **Smart Handling**:
+  - If no log exists: Creates new log with `watch_status: 'to-watch'`
+  - If log exists with rating: Clears watch_status (keeps rating)
+  - If log exists without rating: Deletes log entry
+  - If already in watchlist: Removes from watchlist
+- **Toast Notifications**: Success feedback for all actions
+
+#### Three-Button Action Layout
+- **Watchlist Button** (left): Quick toggle with eye icon
+  - Shows "Watchlist" or "In Watchlist" based on status
+  - Gray background, active state with white text
+- **Log Movie Button** (center, primary): Opens full logging modal
+  - Prominent red gradient background
+  - Shows "Log Movie" or "Edit Log" based on existing log
+- **Add to List Button** (right): Adds to custom user-created lists
+  - Standard button styling
+  - Opens dropdown with list selection
+
+### 🎨 UI/UX
+
+#### Button Design
+- **Dark Theme**: Zinc-900 backgrounds, gray borders
+- **Hover Effects**: Lift animation with shadow
+- **Active States**: Visual feedback for toggled watchlist
+- **Icons**: SVG eye icon for watchlist, plus icon for log movie
+- **Tooltips**: Title attribute explains action on hover
+
+#### Mobile Responsive
+- **Vertical Stacking**: Buttons stack on screens < 480px
+- **Full Width**: Each button takes full width on mobile
+- **Touch Targets**: Maintained 44px minimum height
+
+### 🛠️ Changed
+
+#### Backend (`src/api/tmdb.js`)
+- **All Fetch Calls**: Added `headers: { 'Accept': 'application/json' }` option
+- **Error Handling**: Added `if (!response.ok)` checks before parsing JSON
+- **Error Messages**: Descriptive TMDB API error messages with status codes
+
+#### Frontend (`src/pages/MovieDetail.jsx`)
+- **New Import**: `useToast` from ToastContext for notifications
+- **New Handler**: `handleToggleWatchlist()` function for quick watchlist toggle
+- **Supabase Queries**: Uses `movie_logs` table with `watch_status` field
+- **State Updates**: Updates `userLog` state after watchlist changes
+- **Action Buttons**: Replaced 2-button layout with 3-button layout
+
+#### Styling (`src/pages/MovieDetail.css`)
+- **New Classes**:
+  - `.movie-actions` - Flex container with gap spacing
+  - `.watchlist-btn` - Watchlist toggle button styling
+  - `.watchlist-btn.active` - Active/highlighted state
+  - `.log-movie-btn-primary` - Primary log movie button
+  - Mobile responsive rules for button stacking
+
+### ⚡ Performance
+
+#### API Reliability
+- **Prevents 406 Errors**: Proper headers eliminate failed requests
+- **Better Error Messages**: Clear debugging for API failures
+- **Consistent Pattern**: All fetch calls use same header structure
+
+### 📝 Documentation
+
+#### Updated Files
+- **CHANGELOG.md** - Comprehensive v1.7.0 release notes
+- **ROADMAP.md** - Bug fixes marked as complete
 
 ---
 

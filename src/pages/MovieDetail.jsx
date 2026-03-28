@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { getMovieDetails, getBackdropUrl, getPosterUrl, getProfileUrl, fetchWatchProviders } from '../api/tmdb';
 import { getRtScoreByImdbId } from '../api/omdb';
 import { useUser } from '../context/UserContext';
+import { useToast } from '../context/ToastContext';
 import { getSupabase } from '../supabaseClient';
 import LogMovieModal from '../components/LogMovieModal';
 import AddToListButton from '../components/AddToListButton';
@@ -243,6 +244,57 @@ function MovieDetail() {
     setShowLogModal(false);
   };
 
+  const handleToggleWatchlist = async () => {
+    if (!isAuthenticated || !movie?.id) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    try {
+      const supabase = getSupabase();
+      const { data: existing } = await supabase
+        .from('movie_logs')
+        .select('id, watch_status, rating')
+        .eq('tmdb_id', movie.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existing) {
+        if (existing.watch_status === 'to-watch') {
+          if (!existing.rating) {
+            await supabase.from('movie_logs').delete().eq('id', existing.id);
+            toast.success('Removed from Watchlist');
+            setUserLog(null);
+          } else {
+            await supabase.from('movie_logs').update({ watch_status: null }).eq('id', existing.id);
+            toast.success('Removed from Watchlist');
+            setUserLog(prev => prev ? { ...prev, watch_status: null } : null);
+          }
+        } else {
+          await supabase.from('movie_logs').update({ watch_status: 'to-watch' }).eq('id', existing.id);
+          toast.success('Added to Watchlist');
+          setUserLog(prev => prev ? { ...prev, watch_status: 'to-watch' } : null);
+        }
+      } else {
+        const { data: newLog, error } = await supabase
+          .from('movie_logs')
+          .insert({
+            user_id: user.id,
+            tmdb_id: movie.id,
+            title: movie.title,
+            poster_path: movie.poster_path,
+            watch_status: 'to-watch',
+          })
+          .select().single();
+        if (error) throw error;
+        toast.success('Added to Watchlist');
+        setUserLog(newLog);
+      }
+    } catch (err) {
+      console.error('Error toggling watchlist:', err);
+      toast.error('Failed to update watchlist');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="loading-page">
@@ -428,25 +480,34 @@ function MovieDetail() {
                 </div>
               )}
 
-              {/* Action Buttons */}
+              {/* Action Buttons - Three Button Layout */}
               <div className="movie-actions">
-                <AddToListButton 
-                  movie={{ 
-                    tmdb_id: movie.id, 
-                    title: movie.title, 
-                    poster_path: movie.poster_path 
-                  }} 
-                  className="add-to-list-detail"
-                />
+                {/* Watchlist Button (Eye Icon) */}
                 <button
-                  className="log-movie-btn relative z-50"
-                  onClick={handleLogMovie}
+                  className={`watchlist-btn ${userLog?.watch_status === 'to-watch' ? 'active' : ''}`}
+                  onClick={handleToggleWatchlist}
+                  title={userLog?.watch_status === 'to-watch' ? 'Remove from Watchlist' : 'Add to Watchlist'}
                 >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  <span>{userLog?.watch_status === 'to-watch' ? 'In Watchlist' : 'Watchlist'}</span>
+                </button>
+
+                {/* Log Movie Button (Primary) */}
+                <button className="log-movie-btn-primary" onClick={handleLogMovie}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M12 5v14M5 12h14" />
                   </svg>
-                  {userLog ? 'Edit Log' : 'Log Movie'}
+                  <span>{userLog ? 'Edit Log' : 'Log Movie'}</span>
                 </button>
+
+                {/* Add to List Button (Folder Icon) */}
+                <AddToListButton
+                  movie={{ tmdb_id: movie.id, title: movie.title, poster_path: movie.poster_path }}
+                  className="add-to-list-detail"
+                />
               </div>
             </div>
           </div>

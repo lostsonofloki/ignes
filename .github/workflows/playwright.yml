@@ -18,7 +18,11 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
-      run: npx playwright test
+      run: npx playwright test --project=chromium
+      env:
+        TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+        TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+        PLAYWRIGHT_BASE_URL: https://ignes-azure.vercel.app
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:

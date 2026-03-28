@@ -279,6 +279,75 @@
   flex-wrap: wrap;
 }
 
+/* Three-Button Action Row */
+.movie-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Watchlist Button */
+.watchlist-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #a1a1aa;
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.watchlist-btn:hover {
+  background: #27272a;
+  border-color: #3f3f46;
+  transform: translateY(-2px);
+}
+
+.watchlist-btn.active {
+  color: #ffffff;
+  background: #27272a;
+  border-color: #a1a1aa;
+}
+
+.watchlist-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Log Movie Button (Primary) */
+.log-movie-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.log-movie-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(153, 27, 27, 0.4);
+}
+
+.log-movie-btn-primary svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Add to List Button Container */
 .add-to-list-detail {
   flex: 1;
   min-width: 160px;
@@ -805,6 +874,19 @@
 
   .score-value {
     font-size: 20px;
+  }
+
+  /* Mobile: Stack action buttons vertically */
+  .movie-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .watchlist-btn,
+  .log-movie-btn-primary,
+  .add-to-list-detail .add-to-list-button {
+    width: 100%;
+    justify-content: center;
   }
 
   .log-movie-btn {

@@ -464,9 +464,12 @@ $ git log --all --full-history -- .env
 
 **Phase**: Phase 6 In Progress 🚀
 
-**Current Version**: v1.6.0 - Where to Watch (Streaming Provider Integration)
+**Current Version**: v1.7.0 - Bug Fixes & UI Polish (406 Error Fix, Quick Watchlist)
 
 **Completed Features**:
+- ✅ **API Reliability** (v1.7.0) - Fixed 406 errors with Accept headers on all TMDB requests
+- ✅ **Quick Watchlist Toggle** (v1.7.0) - One-click eye icon button for watchlist management
+- ✅ **Three-Button Action Layout** (v1.7.0) - Clear separation: Watchlist / Log Movie / Add to List
 - ✅ **Where to Watch** (v1.6.0) - Streaming provider logos with rent/buy fallback
 - ✅ **Magic Importer** (v1.5.0) - AI-powered bulk import with Groq LPU parsing
 - ✅ **Mobile-First Responsive Navbar** - Hamburger menu (mobile) / Inline nav links (desktop 768px+)
