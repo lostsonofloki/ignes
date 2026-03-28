@@ -12,6 +12,10 @@ Ignes is a React-based web application that lets you log, track, and visualize y
 - **Trending Movies**: Browse trending movies from TMDB with beautiful backdrop images
 - **Movie Search**: Search for any movie using TMDB API with global header search bar
 - **Movie Details**: View detailed information with high-res backdrops, cast, and recommendations
+- **📺 Where to Watch**: See streaming providers for any movie (Netflix, Hulu, Prime, etc.)
+  - Provider logos displayed with hover tooltips
+  - Shows free streaming, rental, and purchase options
+  - US region support with smart deduplication
 - **Rotten Tomatoes Scores**: See critic scores fetched from OMDb API
 - **Personal Reviews**: Log movies with ratings, moods, reviews, and watch status
 - **My Library**: StoryGraph-style library with Watched/Want to Watch tabs and rich movie cards

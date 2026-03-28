@@ -63,6 +63,7 @@ A phased approach to building Ignes from a static UI to a fully-featured movie l
 | 2.12 | Build **RatingSlider** | StoryGraph-style precision slider (0.0-5.0) | ✅ |
 | 2.13 | Build **Mood Palette** | 15 moods across 3 categories | ✅ |
 | 2.14 | Build **LogMovieModal** | Full logging form with Supabase insert | ✅ |
+| 2.15 | Integrate **Watch Providers** | Display streaming availability (Where to Watch) | ✅ |
 
 ### API Endpoints (TMDB)
 ```
@@ -70,6 +71,7 @@ GET /trending/movie/{time_window}
 GET /search/movie?q={movie_name}
 GET /movie/{movie_id}
 GET /movie/{movie_id}/recommendations
+GET /movie/{movie_id}/watch/providers
 GET /movie/{movie_id}/images
 ```
 
@@ -86,6 +88,7 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 - ✅ Movie recommendations
 - ✅ Real movie posters and metadata
 - ✅ Seamless form auto-fill from search
+- ✅ Streaming provider display (Where to Watch)
 
 ### Success Criteria
 - [x] Typing a movie name returns relevant results
@@ -95,6 +98,7 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 - [x] Recommendations section shows related movies
 - [x] Clicking a result opens Log Movie form with data pre-filled
 - [x] Handles network errors and no-results scenarios
+- [x] Where to Watch displays streaming providers with logos
 
 ---
 
@@ -460,9 +464,10 @@ $ git log --all --full-history -- .env
 
 **Phase**: Phase 6 In Progress 🚀
 
-**Current Version**: v1.5.1 - Bug Fixes & Stability (Ghost Hunter, Whitespace Search, Security Audit)
+**Current Version**: v1.6.0 - Where to Watch (Streaming Provider Integration)
 
 **Completed Features**:
+- ✅ **Where to Watch** (v1.6.0) - Streaming provider logos with rent/buy fallback
 - ✅ **Magic Importer** (v1.5.0) - AI-powered bulk import with Groq LPU parsing
 - ✅ **Mobile-First Responsive Navbar** - Hamburger menu (mobile) / Inline nav links (desktop 768px+)
   - Desktop: Logo | Discover, Trending, Library, History | Search + Profile

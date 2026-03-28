@@ -190,6 +190,26 @@ export const getProfileUrl = (path, size = 'w185') => {
 };
 
 /**
+ * Get watch providers for a movie (US region)
+ * @param {number} tmdbId - TMDB movie ID
+ * @returns {Promise<Object|null>} - Watch provider data with flatrate, rent, buy arrays
+ */
+export const fetchWatchProviders = async (tmdbId) => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/movie/${tmdbId}/watch/providers?api_key=${API_KEY}`
+    );
+    const data = await response.json();
+    
+    // Return US region data if available
+    return data?.results?.US || null;
+  } catch (error) {
+    console.error('Error fetching watch providers:', error);
+    return null;
+  }
+};
+
+/**
  * Fetch movie details from TMDB by title and year
  * @param {string} title - Movie title
  * @param {string} year - Release year (optional)

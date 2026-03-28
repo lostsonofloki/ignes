@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { getMovieDetails, getBackdropUrl, getPosterUrl, getProfileUrl } from '../api/tmdb';
+import { getMovieDetails, getBackdropUrl, getPosterUrl, getProfileUrl, fetchWatchProviders } from '../api/tmdb';
 import { getRtScoreByImdbId } from '../api/omdb';
 import { useUser } from '../context/UserContext';
 import { getSupabase } from '../supabaseClient';
@@ -141,6 +141,7 @@ function MovieDetail() {
   const [showLogModal, setShowLogModal] = useState(false);
   const [userLog, setUserLog] = useState(null);
   const [editingLog, setEditingLog] = useState(null);
+  const [watchProviders, setWatchProviders] = useState(null);
 
   useEffect(() => {
     const fetchMovieData = async () => {
@@ -159,7 +160,11 @@ function MovieDetail() {
         }
 
         setMovie(movieData);
-        
+
+        // Fetch watch providers for this movie
+        const providers = await fetchWatchProviders(id);
+        setWatchProviders(providers);
+
         // SAFETY CHECK: Filter recommendations
         const filteredRecs = filterRecommendations(movieData.recommendations?.results || []);
         setRecommendations(filteredRecs.slice(0, 6));
@@ -354,6 +359,74 @@ function MovieDetail() {
                   <span key={genre.id} className="genre-chip">{genre.name}</span>
                 ))}
               </div>
+
+              {/* Where to Watch Section */}
+              {watchProviders && (
+                <div className="watch-providers-section">
+                  <h3 className="watch-section-title">Where to Watch</h3>
+                  <div className="watch-providers-row">
+                    {/* Priority 1: Free Streaming (flatrate) - deduplicated by provider name */}
+                    {watchProviders.flatrate && watchProviders.flatrate.length > 0 ? (
+                      Array.from(
+                        new Map(watchProviders.flatrate.map(p => [p.provider_name, p])).values()
+                      ).map((provider) => (
+                        <div
+                          key={provider.provider_id}
+                          className="provider-logo-wrapper"
+                          title={`Stream on ${provider.provider_name}`}
+                        >
+                          <img
+                            src={`https://image.tmdb.org/t/p/w92${provider.logo_path}`}
+                            alt={provider.provider_name}
+                            className="provider-logo"
+                          />
+                          <span className="provider-tooltip">{provider.provider_name}</span>
+                        </div>
+                      ))
+                    ) : (
+                      /* Fallback: Rent & Buy options if no free streaming - deduplicated */
+                      <>
+                        {watchProviders.rent && watchProviders.rent.length > 0 && (
+                          Array.from(
+                            new Map(watchProviders.rent.slice(0, 4).map(p => [p.provider_name, p])).values()
+                          ).map((provider) => (
+                            <div
+                              key={provider.provider_id}
+                              className="provider-logo-wrapper rent"
+                              title={`Rent on ${provider.provider_name}`}
+                            >
+                              <img
+                                src={`https://image.tmdb.org/t/p/w92${provider.logo_path}`}
+                                alt={provider.provider_name}
+                                className="provider-logo"
+                              />
+                              <span className="provider-tooltip">{provider.provider_name} (Rent)</span>
+                            </div>
+                          ))
+                        )}
+                        {watchProviders.buy && watchProviders.buy.length > 0 && (
+                          Array.from(
+                            new Map(watchProviders.buy.slice(0, 4).map(p => [p.provider_name, p])).values()
+                          ).map((provider) => (
+                            <div
+                              key={provider.provider_id}
+                              className="provider-logo-wrapper buy"
+                              title={`Buy on ${provider.provider_name}`}
+                            >
+                              <img
+                                src={`https://image.tmdb.org/t/p/w92${provider.logo_path}`}
+                                alt={provider.provider_name}
+                                className="provider-logo"
+                              />
+                              <span className="provider-tooltip">{provider.provider_name} (Buy)</span>
+                            </div>
+                          ))
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="movie-actions">

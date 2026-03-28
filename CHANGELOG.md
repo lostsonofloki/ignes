@@ -7,24 +7,96 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## Latest Version: 1.5.0 (March 26, 2026)
+## Latest Version: 1.6.0 (March 28, 2026)
 
 **Highlights:**
-- 📦 **Magic Importer** - Bulk import entire movie lists from Letterboxd, notes, or any text format
-- 🤖 **AI-Powered Parsing** - Groq LPU extracts titles and years from messy text automatically
-- ✅ **TMDB Verification** - Auto-verifies all movies against TMDB before importing
-- 🎯 **Smart Deduplication** - Automatically skips movies you've already logged
-- 📋 **List Integration** - Option to add imported movies directly to custom lists
+- 📺 **Where to Watch** - See streaming providers for any movie
+- 🎬 **Provider Logos** - Netflix, Hulu, Prime, Apple TV+ and more
+- 💰 **Rent/Buy Options** - Fallback shows rental/purchase options if not streaming
+- 🔍 **Deduplicated Providers** - Smart filtering removes duplicate entries
 
 **Quick Links:**
-- [Full v1.5.0 Notes](#150---march-26-2026)
-- [Previous: v1.4.1](#141---march-26-2026)
+- [Full v1.6.0 Notes](#160---march-28-2026)
+- [Previous: v1.5.1](#151---march-26-2026)
 - [Roadmap](./ROADMAP.md)
 - [README](./README.md)
 
 ---
 
-## [1.5.0] - March 26, 2026
+## [1.6.0] - March 28, 2026
+
+### 🚀 Added
+
+#### Where to Watch Feature
+- **`fetchWatchProviders()`** - New TMDB API integration for watch provider data
+- **US Region Support** - Fetches streaming availability for United States
+- **Three-Tier Display**:
+  - **Priority 1**: Free streaming providers (flatrate)
+  - **Fallback**: Rent options (marked with orange "R" badge)
+  - **Fallback**: Buy options (marked with blue "B" badge)
+- **Provider Logos** - Displays official provider artwork from TMDB
+- **Hover Tooltips** - Shows provider name on hover with CSS tooltip
+
+### 🎨 UI/UX
+
+#### Visual Design
+- **Dark Theme Integration** - Zinc-900 backgrounds matching app aesthetic
+- **Rounded Corners** - `rounded-xl` (12px) provider logos
+- **Hover Effects** - Scale up (1.1x) with shadow glow on hover
+- **Clean Layout** - Providers displayed below genres, above action buttons
+- **Mobile Responsive** - Smaller logos (42px) on screens < 640px
+
+#### Smart Deduplication
+- **Name-Based Filtering** - Uses `Map` to deduplicate by provider name
+- **Handles Variants** - "Netflix" and "Netflix with ads" collapse to single entry
+- **First Occurrence Wins** - Keeps primary provider tier when duplicates exist
+
+### 🛠️ Changed
+
+#### Backend (`src/api/tmdb.js`)
+- **New Function**: `fetchWatchProviders(tmdbId)` - Fetches US watch provider data
+- **API Endpoint**: `/movie/{movie_id}/watch/providers`
+- **Error Handling** - Graceful fallback returns `null` on failure
+
+#### Frontend (`src/pages/MovieDetail.jsx`)
+- **New State**: `watchProviders` - Stores flatrate/rent/buy arrays
+- **Fetch Integration** - Called alongside movie details in `fetchMovieData()`
+- **Conditional Rendering** - Only displays section when providers exist
+- **Deduplication Logic** - `Array.from(new Map(...).values())` pattern
+
+#### Styling (`src/pages/MovieDetail.css`)
+- **New Classes**:
+  - `.watch-providers-section` - Container with border-top separator
+  - `.watch-section-title` - Uppercase label with zinc-400 color
+  - `.provider-logo-wrapper` - Individual provider card with hover effects
+  - `.provider-tooltip` - Hover tooltip with arrow pointer
+  - `.provider-logo-wrapper.rent::before` - Orange "R" badge
+  - `.provider-logo-wrapper.buy::before` - Blue "B" badge
+
+### ⚡ Performance
+
+#### API Efficiency
+- **Single Request** - One TMDB call per movie detail page load
+- **Cached Results** - Provider data stored in component state
+- **Parallel-Ready** - Could be combined with other fetches in future optimization
+
+### 📝 Documentation
+
+#### Updated Files
+- **CHANGELOG.md** - Comprehensive v1.6.0 release notes
+- **README.md** - Where to Watch feature documentation
+- **ROADMAP.md** - Streaming integration marked as complete
+
+### 🐛 Fixed
+
+#### Bug Prevention
+- **Missing Logo Handling** - Only renders providers with valid `logo_path`
+- **Empty State** - Section hidden if no providers available
+- **Provider Name Display** - Tooltip shows full name even for truncated logos
+
+---
+
+## [1.5.1] - March 26, 2026
 
 ### 🚀 Added
 
