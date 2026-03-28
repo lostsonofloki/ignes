@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import IgnesLogo from './IgnesLogo';
 import './Header.css';
@@ -8,7 +8,7 @@ import './Header.css';
  * Header Component
  * Clean navigation layout with branding on left, user controls on right
  */
-function Header() {
+function Header({ onOracleClick }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, logout } = useUser();
@@ -127,7 +127,7 @@ function Header() {
             </button>
           </div>
 
-          {/* Desktop: Search + Auth */}
+          {/* Desktop: Search + Oracle + Auth */}
           <div className="desktop-controls">
             <form onSubmit={handleSubmit} className="desktop-search-form">
               <input
@@ -138,6 +138,9 @@ function Header() {
                 className="desktop-search-input"
               />
             </form>
+            <button onClick={onOracleClick} className="oracle-btn">
+              ✨ Oracle
+            </button>
             {isAuthenticated ? (
               <div className="user-controls">
                 <Link to="/profile" className="username-link">{user?.username}</Link>
@@ -158,7 +161,8 @@ function Header() {
             <Link to="/" className={`mobile-nav-link ${isActive('/') ? 'active' : ''}`} onClick={() => setIsMobileMenuOpen(false)}>Trending</Link>
             <Link to="/library" className={`mobile-nav-link ${isActive('/library') ? 'active' : ''}`} onClick={() => setIsMobileMenuOpen(false)}>Library</Link>
             <Link to="/history" className={`mobile-nav-link ${isActive('/history') ? 'active' : ''}`} onClick={() => setIsMobileMenuOpen(false)}>History</Link>
-
+            <button onClick={onOracleClick} className="mobile-oracle-btn" onClick={() => setIsMobileMenuOpen(false)}>✨ Oracle</button>
+            
             {isAuthenticated ? (
               <div className="mobile-auth">
                 <Link to="/profile" className="mobile-username" onClick={() => setIsMobileMenuOpen(false)}>👤 {user?.username}</Link>
