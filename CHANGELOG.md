@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.1] - March 29, 2026
+
+### 🐛 Fixed
+- 🔧 **Discover Page 400 Error** - Fixed Supabase payload schema mismatch in Watchlist button
+  - Changed `poster` to `poster_path` to match current database schema
+  - Removed redundant fields (`year`, `rating`, `moods`, `review`) from insert payload
+  - Only essential fields now sent: `user_id`, `tmdb_id`, `title`, `poster_path`, `watch_status`
+
+---
+
 ## Latest Version: 1.8.0 (March 29, 2026)
 
 **Highlights:**

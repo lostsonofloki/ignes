@@ -426,12 +426,8 @@ function DiscoveryPage() {
                               user_id: user.id,
                               tmdb_id: movieTmdb.id,
                               title: movieTmdb.title,
-                              year: movieTmdb.release_date?.split('-')[0],
-                              poster: movieTmdb.poster_path,
-                              watch_status: 'to-watch',
-                              rating: 0,
-                              moods: [],
-                              review: ''
+                              poster_path: movieTmdb.poster_path,
+                              watch_status: 'to-watch'
                             });
                             if (error) throw error;
                             toast.success(`Added to Watchlist`);
