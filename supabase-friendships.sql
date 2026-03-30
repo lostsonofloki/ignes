@@ -60,30 +60,73 @@ CREATE POLICY "Users can delete friendships"
   USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
 
 -- ============================================
--- Profiles email column for friend search
+-- Add username column to profiles (from auth.users.email)
 -- ============================================
 
 DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
-    WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'email'
+    WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'username'
   ) THEN
-    ALTER TABLE public.profiles ADD COLUMN email TEXT;
+    ALTER TABLE public.profiles ADD COLUMN username TEXT;
   END IF;
 END $$;
 
-CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
+-- Create index on profiles username for fast lookups
+CREATE INDEX IF NOT EXISTS idx_profiles_username ON public.profiles(username);
 
+-- Allow users to view other users' profiles (needed for friend search)
 DROP POLICY IF EXISTS "Users can view other users' profiles" ON public.profiles;
 CREATE POLICY "Users can view other users' profiles"
   ON public.profiles
   FOR SELECT
   USING (true);
 
--- Backfill emails from auth.users
-UPDATE public.profiles p SET email = au.email
-FROM auth.users au WHERE p.id = au.id AND p.email IS NULL;
+-- ============================================
+-- Sync profiles.username from auth.users.email (extract username from email)
+-- ============================================
+
+-- Function to extract username from email
+CREATE OR REPLACE FUNCTION public.extract_username_from_email(email_text TEXT)
+RETURNS TEXT AS $$
+BEGIN
+  RETURN SPLIT_PART(SPLIT_PART(email_text, '@', 1), '.', 1);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Backfill existing profiles with username from email
+UPDATE public.profiles p 
+SET username = public.extract_username_from_email(au.email)
+FROM auth.users au 
+WHERE p.id = au.id AND (p.username IS NULL OR p.username = '');
+
+-- ============================================
+-- Auto-sync username on user creation
+-- ============================================
+
+-- Function to sync username on new user creation
+CREATE OR REPLACE FUNCTION public.sync_profile_username()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, display_name, username)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    public.extract_username_from_email(NEW.email)
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    username = public.extract_username_from_email(NEW.email);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create trigger to auto-sync username on user creation
+DROP TRIGGER IF EXISTS on_auth_user_created_username ON auth.users;
+CREATE TRIGGER on_auth_user_created_username
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sync_profile_username();
 
 -- ============================================
 -- Comments

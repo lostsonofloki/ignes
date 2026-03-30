@@ -135,6 +135,7 @@ function MovieDetail() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useUser();
+  const toast = useToast();
   const [movie, setMovie] = useState(null);
   const [rtScore, setRtScore] = useState(null);
   const [isLoading, setIsLoading] = useState(true);

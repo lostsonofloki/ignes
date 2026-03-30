@@ -135,6 +135,11 @@
   gap: 32px;
   align-items: flex-end;
   width: 100%;
+  pointer-events: none;
+}
+
+.hero-content > * {
+  pointer-events: auto;
 }
 
 .hero-poster {

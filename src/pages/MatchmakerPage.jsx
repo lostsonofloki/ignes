@@ -300,9 +300,9 @@ function MatchmakerPage() {
                     />
                     <div className="user-info">
                       <span className="user-display-name">
-                        {request.profiles?.display_name || request.profiles?.username || 'Unknown User'}
+                        {request.profiles?.display_name?.split('@')[0] || request.profiles?.username || 'User'}
                       </span>
-                      <span className="user-username">@{request.profiles?.username || 'user'}</span>
+                      <span className="user-username">@{request.profiles?.username || request.profiles?.display_name?.split('@')[0] || 'user'}</span>
                     </div>
                   </div>
                   <div className="request-actions">
@@ -335,9 +335,9 @@ function MatchmakerPage() {
                     />
                     <div className="user-info">
                       <span className="user-display-name">
-                        {request.receiver?.display_name || request.receiver?.username || 'Unknown User'}
+                        {request.receiver?.display_name?.split('@')[0] || request.receiver?.username || 'User'}
                       </span>
-                      <span className="user-username">@{request.receiver?.username || 'user'}</span>
+                      <span className="user-username">@{request.receiver?.username || request.receiver?.display_name?.split('@')[0] || 'user'}</span>
                     </div>
                   </div>
                   <div className="request-actions">
@@ -370,9 +370,9 @@ function MatchmakerPage() {
                     />
                     <div className="user-info">
                       <span className="user-display-name">
-                        {friendship.friend?.display_name || friendship.friend?.username || 'Unknown User'}
+                        {friendship.friend?.display_name?.split('@')[0] || friendship.friend?.username || 'User'}
                       </span>
-                      <span className="user-username">@{friendship.friend?.username || 'user'}</span>
+                      <span className="user-username">@{friendship.friend?.username || friendship.friend?.display_name?.split('@')[0] || 'user'}</span>
                     </div>
                   </div>
                   <div className="friend-actions">
