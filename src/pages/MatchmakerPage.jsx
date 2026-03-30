@@ -152,11 +152,15 @@ function MatchmakerPage() {
       }
 
       // Check if request already exists
-      const { data: existing } = await supabase
+      const { data: existing, error: existingError } = await supabase
         .from('friendships')
         .select('id')
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${userData.id}),and(sender_id.eq.${userData.id},receiver_id.eq.${user.id})`)
-        .single();
+        .maybeSingle();
+
+      if (existingError) {
+        console.error('Error checking existing friendship:', existingError);
+      }
 
       if (existing) {
         toast.error('Request already sent to this user');
@@ -176,7 +180,7 @@ function MatchmakerPage() {
 
       if (insertError) throw insertError;
 
-      toast.success(`Friend request sent to ${userData.display_name || userData.username}!`);
+      toast.success(`Friend request sent to ${userData?.display_name || userData?.username}!`);
       setInviteEmail('');
       fetchFriendships();
     } catch (err) {
@@ -285,18 +289,18 @@ function MatchmakerPage() {
               {friendRequests.map((request) => (
                 <div key={request.id} className="request-card">
                   <div className="request-user">
-                    {request.sender.avatar_url ? (
-                      <img src={request.sender.avatar_url} alt={request.sender.username} className="user-avatar" />
+                    {request.profiles?.avatar_url ? (
+                      <img src={request.profiles?.avatar_url} alt={request.profiles?.username} className="user-avatar" />
                     ) : (
                       <div className="user-avatar-placeholder">
-                        {request.sender.username?.charAt(0).toUpperCase()}
+                        {request.profiles?.username?.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="user-info">
                       <span className="user-display-name">
-                        {request.sender.display_name || request.sender.username}
+                        {request.profiles?.display_name || request.profiles?.username}
                       </span>
-                      <span className="user-username">@{request.sender.username}</span>
+                      <span className="user-username">@{request.profiles?.username}</span>
                     </div>
                   </div>
                   <div className="request-actions">
@@ -321,18 +325,18 @@ function MatchmakerPage() {
               {sentRequests.map((request) => (
                 <div key={request.id} className="request-card">
                   <div className="request-user">
-                    {request.receiver.avatar_url ? (
-                      <img src={request.receiver.avatar_url} alt={request.receiver.username} className="user-avatar" />
+                    {request.receiver?.avatar_url ? (
+                      <img src={request.receiver?.avatar_url} alt={request.receiver?.username} className="user-avatar" />
                     ) : (
                       <div className="user-avatar-placeholder">
-                        {request.receiver.username?.charAt(0).toUpperCase()}
+                        {request.receiver?.username?.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="user-info">
                       <span className="user-display-name">
-                        {request.receiver.display_name || request.receiver.username}
+                        {request.receiver?.display_name || request.receiver?.username}
                       </span>
-                      <span className="user-username">@{request.receiver.username}</span>
+                      <span className="user-username">@{request.receiver?.username}</span>
                     </div>
                   </div>
                   <div className="request-actions">
@@ -357,24 +361,24 @@ function MatchmakerPage() {
                   className="friend-card"
                 >
                   <div className="friend-user">
-                    {friendship.friend.avatar_url ? (
-                      <img src={friendship.friend.avatar_url} alt={friendship.friend.username} className="user-avatar" />
+                    {friendship.friend?.avatar_url ? (
+                      <img src={friendship.friend?.avatar_url} alt={friendship.friend?.username} className="user-avatar" />
                     ) : (
                       <div className="user-avatar-placeholder">
-                        {friendship.friend.username?.charAt(0).toUpperCase()}
+                        {friendship.friend?.username?.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="user-info">
                       <span className="user-display-name">
-                        {friendship.friend.display_name || friendship.friend.username}
+                        {friendship.friend?.display_name || friendship.friend?.username}
                       </span>
-                      <span className="user-username">@{friendship.friend.username}</span>
+                      <span className="user-username">@{friendship.friend?.username}</span>
                     </div>
                   </div>
                   <div className="friend-actions">
                     <button
                       className="compare-btn"
-                      onClick={() => navigate(`/matchmaker/${friendship.friend.id}`)}
+                      onClick={() => navigate(`/matchmaker/${friendship.friend?.id}`)}
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="11" cy="11" r="8" />
