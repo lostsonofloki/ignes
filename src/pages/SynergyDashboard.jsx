@@ -45,12 +45,12 @@ function SynergyDashboard() {
       // Fetch both users' movie logs
       const { data: myLogs, error: myLogsError } = await supabase
         .from('movie_logs')
-        .select('tmdb_id, title, poster_path, rating, genres, watch_status')
+        .select('tmdb_id, title, poster, rating, genres, watch_status')
         .eq('user_id', user.id);
 
       const { data: friendLogs, error: friendLogsError } = await supabase
         .from('movie_logs')
-        .select('tmdb_id, title, poster_path, rating, genres, watch_status')
+        .select('tmdb_id, title, poster, rating, genres, watch_status')
         .eq('user_id', friendId);
 
       if (myLogsError) throw myLogsError;
@@ -83,7 +83,7 @@ function SynergyDashboard() {
         sharedMovies.push({
           tmdb_id: myMovie.tmdb_id,
           title: myMovie.title,
-          poster_path: myMovie.poster_path,
+          poster: myMovie.poster,
           myRating: myMovie.rating,
           theirRating: friendMovie.rating,
           difference: Math.abs(myMovie.rating - friendMovie.rating),
@@ -92,23 +92,19 @@ function SynergyDashboard() {
     });
 
     // Find shared watchlist (both want to watch)
-    const myWatchlist = new Set(
-      myLogs.filter(m => m.watch_status === 'to-watch').map(m => m.tmdb_id)
-    );
-    const theirWatchlist = new Set(
-      friendLogs.filter(m => m.watch_status === 'to-watch').map(m => m.tmdb_id)
-    );
-    
+    const myWatchlist = new Set(myLogs.filter(m => m.watch_status === 'to-watch').map(m => m.tmdb_id));
+    const theirWatchlist = new Set(friendLogs.filter(m => m.watch_status === 'to-watch').map(m => m.tmdb_id));
+
     const sharedWatchlist = [];
     const seenTmdbIds = new Set();
-    
+
     myLogs.forEach(myMovie => {
       if (myWatchlist.has(myMovie.tmdb_id) && theirWatchlist.has(myMovie.tmdb_id)) {
         if (!seenTmdbIds.has(myMovie.tmdb_id)) {
           sharedWatchlist.push({
             tmdb_id: myMovie.tmdb_id,
             title: myMovie.title,
-            poster_path: myMovie.poster_path,
+            poster: myMovie.poster,
           });
           seenTmdbIds.add(myMovie.tmdb_id);
         }
@@ -301,9 +297,9 @@ function SynergyDashboard() {
                 <div className="debates-list">
                   {synergyData.greatDebates.slice(0, 5).map((debate) => (
                     <div key={debate.tmdb_id} className="debate-card">
-                      {debate.poster_path && (
+                      {debate.poster && (
                         <img
-                          src={getPosterUrl(debate.poster_path, 'w185')}
+                          src={getPosterUrl(debate.poster, 'w185')}
                           alt={debate.title}
                           className="debate-poster"
                         />
@@ -343,9 +339,9 @@ function SynergyDashboard() {
               <div className="shared-watchlist-grid">
                 {synergyData.sharedWatchlist.map((movie) => (
                   <div key={movie.tmdb_id} className="shared-movie-card">
-                    {movie.poster_path ? (
+                    {movie.poster ? (
                       <img
-                        src={getPosterUrl(movie.poster_path, 'w342')}
+                        src={getPosterUrl(movie.poster, 'w342')}
                         alt={movie.title}
                         className="shared-poster"
                       />
