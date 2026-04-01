@@ -171,9 +171,7 @@ export const batchSaveMovies = async (confirmedMovies, userId, supabase) => {
     tmdb_id: movie.tmdb.id,
     title: movie.tmdb.title,
     year: movie.tmdb.release_date?.split('-')[0] || 'N/A',
-    poster: movie.tmdb.poster_path 
-      ? `https://image.tmdb.org/t/p/w500${movie.tmdb.poster_path}` 
-      : 'N/A',
+    poster_path: movie.tmdb.poster_path || null,
     watch_status: movie.watch_status || 'to-watch',
     rating: movie.rating || 0,
     moods: movie.moods || [],
