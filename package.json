@@ -1,6 +1,6 @@
 {
   "name": "ignes",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "**Your Personal Movie Logging & Visualization Platform**",
   "type": "module",
   "scripts": {

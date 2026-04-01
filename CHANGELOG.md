@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.2] - April 1, 2026
+
+### 🐛 Fixed
+- 🔧 **Archive Importer Batch Save Error** - Fixed Supabase generated column conflict
+  - Changed `poster` to `poster_path` in `batchSaveMovies` function
+  - Removed URL construction (stores raw `poster_path` instead of full URL)
+  - Payload now excludes non-DEFAULT values for generated columns
+  - Final insert format: `{ user_id, tmdb_id, title, year, poster_path, watch_status, rating, moods, review, genres }`
+
+### 🧪 Added
+- 📸 **Playwright Portfolio Screenshot Tests** - Automated high-res screenshots for portfolio
+  - Desktop (1920x1080): Matchmaker, Oracle, Stats pages
+  - Mobile (390x844): Library page
+  - Auto-authentication via `/login` with credential wait
+  - Output to `portfolio-screenshots/` folder
+  - Run with: `npx playwright test portfolio-screenshots --project=chromium`
+
+---
+
 ## [1.8.1] - March 29, 2026
 
 ### 🐛 Fixed
