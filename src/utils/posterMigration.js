@@ -2,52 +2,60 @@ import { getSupabase } from '../supabaseClient';
 import { fetchTMDBMovie } from '../api/tmdb';
 
 /**
- * Migration: Fix poster URLs for movies imported before v1.5.0
- * Converts relative paths (/abc123.jpg) to full TMDB URLs
+ * Migration: Fix poster_path for movies imported before v1.8.2
+ * Updates poster_path column - Supabase generated column syncs to poster automatically
  */
 
 /**
  * Fix a single movie's poster URL
  * @param {string} movieId - movie_logs.id
  * @param {string} tmdbId - TMDB movie ID
- * @param {string} currentPoster - Current poster value (relative path or N/A)
+ * @param {string} currentPosterPath - Current poster_path value (relative path or null)
  * @param {Object} supabase - Supabase client
  */
-export const fixMoviePoster = async (movieId, tmdbId, currentPoster, supabase) => {
-  // Skip if already a full URL
-  if (currentPoster?.startsWith('https://')) {
+export const fixMoviePoster = async (movieId, tmdbId, currentPosterPath, supabase) => {
+  // Skip if already a full URL (shouldn't happen with poster_path)
+  if (currentPosterPath?.startsWith('https://')) {
     return { success: false, reason: 'Already has full URL' };
   }
 
-  // Skip if N/A or null
-  if (!currentPoster || currentPoster === 'N/A') {
+  // Skip if null/empty
+  if (!currentPosterPath || currentPosterPath === 'N/A') {
     // Try to fetch from TMDB
     if (!tmdbId) {
       return { success: false, reason: 'No TMDB ID' };
     }
-    
+
     const tmdbData = await fetchTMDBMovieByTmdbId(tmdbId);
     if (!tmdbData?.poster_path) {
       return { success: false, reason: 'No poster on TMDB' };
     }
-    
-    const fullUrl = `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}`;
-    await supabase
+
+    const { error } = await supabase
       .from('movie_logs')
-      .update({ poster: fullUrl })
+      .update({ poster_path: tmdbData.poster_path })
       .eq('id', movieId);
-    
+
+    if (error) {
+      console.error(`❌ PATCH failed for ${movieId}:`, error.message);
+      return { success: false, reason: error.message };
+    }
+
     return { success: true, action: 'Fetched from TMDB' };
   }
 
-  // Convert relative path to full URL
-  const fullUrl = `https://image.tmdb.org/t/p/w500${currentPoster}`;
-  await supabase
+  // Already has relative path - update with full poster_path
+  const { error } = await supabase
     .from('movie_logs')
-    .update({ poster: fullUrl })
+    .update({ poster_path: currentPosterPath })
     .eq('id', movieId);
 
-  return { success: true, action: 'Converted to full URL' };
+  if (error) {
+    console.error(`❌ PATCH failed for ${movieId}:`, error.message);
+    return { success: false, reason: error.message };
+  }
+
+  return { success: true, action: 'Updated poster_path' };
 };
 
 /**
@@ -91,7 +99,7 @@ export const runPosterMigration = async (userId) => {
   // Fetch all movies for user
   const { data: movies, error } = await supabase
     .from('movie_logs')
-    .select('id, tmdb_id, poster')
+    .select('id, tmdb_id, poster_path')
     .eq('user_id', userId);
 
   if (error) {
@@ -107,8 +115,8 @@ export const runPosterMigration = async (userId) => {
 
   for (const movie of movies) {
     try {
-      const result = await fixMoviePoster(movie.id, movie.tmdb_id, movie.poster, supabase);
-      
+      const result = await fixMoviePoster(movie.id, movie.tmdb_id, movie.poster_path, supabase);
+
       if (result.success) {
         console.log(`✅ Fixed: ${movie.id} - ${result.action}`);
         fixed++;
