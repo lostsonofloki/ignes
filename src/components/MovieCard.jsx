@@ -22,9 +22,13 @@ function MovieCard({ movie, isLibraryCard = false, onEdit, onDelete }) {
     }
   };
 
-  const posterSrc = movie.poster && movie.poster !== 'N/A'
-    ? movie.poster
-    : 'https://via.placeholder.com/300x450/1a1a1a/444444?text=No+Poster';
+  // Use poster_path (raw TMDB path) and construct full URL
+  // Fallback to movie.poster for legacy data, then placeholder
+  const posterSrc = movie.poster_path
+    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+    : movie.poster && movie.poster !== 'N/A'
+      ? movie.poster
+      : 'https://via.placeholder.com/300x450/1a1a1a/444444?text=No+Poster';
 
   const userRating = movie.rating;
 
@@ -74,7 +78,7 @@ function MovieCard({ movie, isLibraryCard = false, onEdit, onDelete }) {
                       movie={{
                         tmdb_id: movie.tmdb_id,
                         title: movie.title,
-                        poster_path: movie.poster?.replace('https://image.tmdb.org/t/p/w500', '')
+                        poster_path: movie.poster_path || movie.poster?.replace('https://image.tmdb.org/t/p/w500', '')
                       }}
                       variant="icon"
                     />
@@ -95,7 +99,7 @@ function MovieCard({ movie, isLibraryCard = false, onEdit, onDelete }) {
                       movie={{
                         tmdb_id: movie.tmdb_id,
                         title: movie.title,
-                        poster_path: movie.poster?.replace('https://image.tmdb.org/t/p/w500', '')
+                        poster_path: movie.poster_path || movie.poster?.replace('https://image.tmdb.org/t/p/w500', '')
                       }}
                       variant="icon"
                     />
@@ -140,7 +144,7 @@ function MovieCard({ movie, isLibraryCard = false, onEdit, onDelete }) {
                 movie={{
                   tmdb_id: movie.tmdb_id,
                   title: movie.title,
-                  poster_path: movie.poster?.replace('https://image.tmdb.org/t/p/w500', '')
+                  poster_path: movie.poster_path || movie.poster?.replace('https://image.tmdb.org/t/p/w500', '')
                 }}
                 variant="icon"
               />

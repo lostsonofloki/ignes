@@ -148,8 +148,13 @@ function WatchHistory() {
                     <div className="timeline-date">{formatDate(movie.created_at)}</div>
                     <div className="timeline-movie-card">
                       <div className="timeline-poster">
-                        {movie.poster ? (
-                          <img src={movie.poster} alt={movie.title} />
+                        {(movie.poster_path || movie.poster) ? (
+                          <img 
+                            src={movie.poster_path 
+                              ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` 
+                              : movie.poster} 
+                            alt={movie.title} 
+                          />
                         ) : (
                           <div className="no-poster">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
