@@ -63,11 +63,13 @@ function SearchResults({ movies }) {
             >
               <div className="movie-card">
                 <div className="movie-card-poster">
-                  <img
-                    src={item.Poster}
-                    alt={`${item.Title} poster`}
-                    loading="lazy"
-                  />
+                  <div className="movie-card-poster-clip">
+                    <img
+                      src={item.Poster}
+                      alt={`${item.Title} poster`}
+                      loading="lazy"
+                    />
+                  </div>
                   <div
                     className="search-card-quick-actions"
                     onClick={(event) => event.stopPropagation()}

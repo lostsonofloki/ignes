@@ -62,7 +62,6 @@ function DiscoveryContent() {
     recommendations,
     tmdbResults,
     error,
-    rejectedTitles,
     selectedProviderIds,
     toggleProvider,
     handleDiscover,
@@ -186,9 +185,9 @@ function DiscoveryContent() {
   const handleRerollOne = useCallback(
     (tmdbId, title, year) => {
       rerollOneRequestStartRef.current = performance.now();
-      onRerollByTmdbId(tmdbId, title, year);
+      handleRerollByTmdbId(tmdbId, title, year);
     },
-    [onRerollByTmdbId]
+    [handleRerollByTmdbId]
   );
 
   useEffect(() => {

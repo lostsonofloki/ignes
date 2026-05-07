@@ -48,7 +48,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added abort-aware Oracle request orchestration in `OracleContext` so rerolls/new discovery/unmount cancel in-flight work and ignore stale late responses.
   - Added UI-safe fallback payload normalization to guarantee non-empty `rationale` and `vibeCheck` fields when metadata fallback paths are used.
   - Expanded Oracle failure observability with normalized `failure_bucket` (`rate_limit`, `parse_fail`, `timeout`, `upstream_unavailable`, `unknown`) and additive `failure_stage` tags for Supabase analytics compatibility.
+  - Added additive `oracle_provider_events` migration coverage for `failure_bucket` and `failure_stage` so runtime telemetry fields remain schema-safe.
   - Added reliability regression coverage for bucket mapping, retry policy boundaries, fallback shape safety, and abort classification in `tests/oracle-query-intelligence.spec.ts`.
+  - Expanded `oracle_provider_events` telemetry with additive hybrid metrics fields: `input_recommendation_count`, `post_filter_recommendation_count`, `dedupe_dropped_count`, `rejected_violation_attempt_count`, `provider_attempt_count`, `fallback_depth`, and `provider_attempts` JSON.
+  - Wired Oracle analytics payload mapping to persist expanded `_meta.qualityMetrics` and `_meta.attemptMetrics` safely while preserving legacy payload compatibility when telemetry blocks are absent.
+  - Added reroll-one analytics persistence and failure-path telemetry carry-through so discover/reroll flows both emit provider-attempt detail.
+  - Persisted provider-selection and ranking impact telemetry in `oracle_provider_events` (`selected_provider_ids`, `provider_match_count`, `provider_filtered_out_count`) while keeping payload defaults backward-compatible.
+  - Added deterministic provider-aware recommendation ranking after TMDB/provider enrichment so provider-matched cards are promoted first without hiding non-matches.
+  - Kept reroll-one index replacement behavior intact while applying ranking to full discover/reroll-all flows only.
+  - Extended Oracle query-intelligence tests with telemetry payload coverage for metric mapping, provider-attempt normalization, fallback-depth behavior, and backward compatibility.
+  - Added ranking regression coverage for deterministic provider promotion and no-preferences pass-through ordering.
+
+---
+
+## [1.12.21] - May 6, 2026
+
+### Fixed
+
+- **Trending cards:** The two quick actions looked like duplicate “+” buttons; **Add to list** now uses a **list** icon and **Log** uses a **pencil** icon, with clearer `aria-label`s on icon-only controls.
+- **Add-to-list menu clipped:** Parent cards used `overflow: hidden`, which cut off the list dropdown (truncated text like “…movies”). Trending **backdrop images** are clipped inside `.backdrop-media-clip` only; search **movie posters** use `.movie-card-poster-clip` the same way so the card no longer clips the menu. Narrow screens use a safer dropdown width (`min(280px, 100vw - padding)`).
+
+---
+
+## [1.12.20] - May 6, 2026
+
+### Changed
+
+- Removed the **Creepster** display font (Google Fonts + `.font-creepster` utility). Page titles and the “Signal Lost” empty state now use the app’s system sans stack; **Matchmaker** and **Profile** social headings match the rest of the UI.
+
+---
+
+## [1.12.19] - May 6, 2026
+
+### Fixed
+
+- **Year in Review / Supabase:** Stopped selecting `movie_logs.watched_at` until the column exists. Recap dates use `created_at` from the query; `buildYearInReview` still supports `watched_at` on the log object when present (e.g. after migration). Added migration `20260507120000_movie_logs_watched_at.sql` to add optional `watched_at` for future use.
+
+---
+
+## [1.12.18] - May 6, 2026
+
+### Added
+
+- **Year in Review (Phase 6.8)** — Profile links to **`/year-in-review`**, a wrapped-style recap by calendar year: films watched (status watched + hybrid log dates), monthly counts, rating distribution and average (rated logs only), top genres and moods, physical UPC count, and reviews written. Year picker covers 2015–current year; optional URL **`/year-in-review/:year`**. Aggregation is client-side via **`buildYearInReview`** in `src/utils/yearInReview.js`. See **`artifacts/adr-year-in-review.md`** for date and metric rules.
+
+---
+
+## [1.12.17] - May 6, 2026
+
+### Fixed
+
+- **Oracle Discovery**: Single-card **Reroll** now invokes `handleRerollByTmdbId` from context (previously referenced an undefined `onRerollByTmdbId`, which threw at runtime when rerolling one recommendation).
+
+### Changed
+
+- **ESLint**: Ignore Capacitor `android/**` and `public/sw.js` so `npm run lint` does not parse generated native bundles or the service worker as generic scripts. Added global `settings.react.version` (`detect`) to silence redundant React plugin warnings.
+- Tidied unused destructuring names in shared-list list-item fallbacks (`sharedLists.js`, `ArchiveImporterModal.jsx`) so lint stays warning-clean for those paths.
+
+---
+
+## [1.12.16] - May 6, 2026
+
+### Added
+
+- **Library Advanced Search (Phase 6.10)** — On **Library** → **Find & refine**, open **Advanced search** to combine mood chips (palette-aligned, any/all moods), genre checkboxes from your logged TMDB genres, and min/max **your rating** (0–5, 0.5 steps). Filters apply to the current shelf (Watched, Watchlist, or Collection) and respect title search, smart filter, and sort. Global TMDB **Search** is unchanged.
 
 ---
 
@@ -66,7 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✅ Quality
 
-- Combined Oracle regression suite passes: `npx playwright test "tests/oracle-query-intelligence.spec.ts"` (55 passed).
+- Combined Oracle regression suite passes: `npx playwright test "tests/oracle-query-intelligence.spec.ts"`.
 - Production build succeeds: `npm run build`.
 - Release metadata synced to `v1.12.15` across `package.json`, `src/constants.js`, and roadmap current-version status.
 

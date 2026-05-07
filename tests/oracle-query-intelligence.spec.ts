@@ -12,6 +12,8 @@ import {
   isAbortLikeError,
   shouldRetryOracleError,
 } from "../src/utils/oracleReliability";
+import { buildOracleEventPayload } from "../src/utils/oracleAnalytics";
+import { rankRecommendationsByProviderAffinity } from "../src/utils/oracleRanking";
 
 test("Oracle query parser maps compound prompt constraints", async () => {
   const parsed = parseOracleQueryConstraints("pre-1960 horror on my watchlist");
@@ -199,3 +201,183 @@ test("Oracle abort detection catches abort-like errors", async () => {
   expect(isAbortLikeError({ message: "Request cancelled by reroll" })).toBeTruthy();
   expect(isAbortLikeError(new Error("Something else"))).toBeFalsy();
 });
+
+test("Oracle analytics payload maps expanded telemetry metrics", async () => {
+  const payload = buildOracleEventPayload({
+    userId: "00000000-0000-0000-0000-000000000001",
+    meta: {
+      provider: "openrouter",
+      modelUsed: "google/gemini-2.0-flash-001",
+      groqUsed: true,
+      latency: "1420ms",
+      qualityMetrics: {
+        inputRecommendationCount: 7,
+        postFilterRecommendationCount: 4,
+        dedupeDroppedCount: 2,
+        rejectedViolationAttemptCount: 1,
+      },
+      attemptMetrics: {
+        providerAttemptCount: 2,
+        fallbackDepth: 1,
+        providerAttempts: [
+          {
+            provider: "gemini",
+            model: "gemini-2.0-flash",
+            result: "failure",
+            status: "429",
+            failure_bucket: "rate_limit",
+            latency_ms: 500,
+          },
+          {
+            provider: "openrouter",
+            model: "google/gemini-2.0-flash-001",
+            result: "success",
+            status: "ok",
+            failure_bucket: null,
+            latency_ms: 920,
+          },
+        ],
+      },
+    },
+    success: true,
+    requestSource: "discover",
+    promptType: "custom_prompt",
+    recommendationCount: 4,
+    tmdbHitCount: 4,
+  });
+
+  expect(payload.input_recommendation_count).toBe(7);
+  expect(payload.post_filter_recommendation_count).toBe(4);
+  expect(payload.dedupe_dropped_count).toBe(2);
+  expect(payload.rejected_violation_attempt_count).toBe(1);
+  expect(payload.provider_attempt_count).toBe(2);
+  expect(payload.fallback_depth).toBe(1);
+  expect(payload.provider_attempts).toHaveLength(2);
+  expect(payload.provider_attempts[0].provider).toBe("gemini");
+  expect(payload.selected_provider_ids).toEqual([]);
+  expect(payload.provider_match_count).toBe(0);
+});
+
+test("Oracle analytics payload normalizes provider-attempt trace shape", async () => {
+  const payload = buildOracleEventPayload({
+    userId: "00000000-0000-0000-0000-000000000001",
+    meta: {
+      provider: "tmdb",
+      attemptMetrics: {
+        providerAttemptCount: 3,
+        fallbackDepth: 2,
+        providerAttempts: [
+          { provider: "gemini", result: "failure", failure_bucket: "timeout", latency_ms: "300" },
+          { provider: "openrouter", result: "failure", failure_bucket: "rate_limit", latency_ms: 480 },
+          { provider: "tmdb", result: "success", status: "ok", latency_ms: "1000ms" },
+        ],
+      },
+    },
+    success: true,
+    requestSource: "discover",
+    promptType: "custom_prompt",
+    recommendationCount: 3,
+    tmdbHitCount: 3,
+  });
+
+  expect(payload.provider_attempt_count).toBe(3);
+  expect(payload.fallback_depth).toBe(2);
+  expect(payload.provider_attempts[0].latency_ms).toBe(300);
+  expect(payload.provider_attempts[2].provider).toBe("tmdb");
+  expect(payload.provider_attempts[2].result).toBe("success");
+});
+
+test("Oracle analytics payload remains backward compatible without telemetry block", async () => {
+  const payload = buildOracleEventPayload({
+    userId: "00000000-0000-0000-0000-000000000001",
+    meta: {
+      provider: "gemini",
+      modelUsed: "gemini-2.0-flash",
+      groqUsed: false,
+      latency: "900ms",
+    },
+    success: false,
+    errorCode: "gemini_error",
+    requestSource: "discover",
+    promptType: "custom_prompt",
+    recommendationCount: 0,
+    tmdbHitCount: 0,
+  });
+
+  expect(payload.provider).toBe("gemini");
+  expect(payload.latency_ms).toBe(900);
+  expect(payload.input_recommendation_count).toBeNull();
+  expect(payload.provider_attempt_count).toBeNull();
+  expect(payload.provider_attempts).toEqual([]);
+  expect(payload.provider_filtered_out_count).toBe(0);
+});
+
+test("Oracle analytics payload persists selected provider and ranking metrics", async () => {
+  const payload = buildOracleEventPayload({
+    userId: "00000000-0000-0000-0000-000000000001",
+    meta: {
+      provider: "gemini",
+      rankingMetrics: {
+        matchedRecommendationCount: 3,
+        filteredOutCount: 2,
+      },
+    },
+    selectedProviderIds: [8, 337, 8, 9],
+    success: true,
+    requestSource: "discover",
+    promptType: "custom_prompt",
+    recommendationCount: 5,
+    tmdbHitCount: 5,
+  });
+
+  expect(payload.selected_provider_ids).toEqual([8, 337, 9]);
+  expect(payload.provider_match_count).toBe(3);
+  expect(payload.provider_filtered_out_count).toBe(2);
+});
+
+test("Oracle provider-aware ranking promotes matches deterministically", async () => {
+  const ranked = rankRecommendationsByProviderAffinity({
+    recommendations: [
+      { title: "No Match First", year: 2000 },
+      { title: "Strong Match", year: 2001 },
+      { title: "Weak Match", year: 2002 },
+    ],
+    tmdbResults: [
+      { id: 1, provider_logos: [], vote_average: 8.1, vote_count: 200 },
+      {
+        id: 2,
+        provider_logos: [{ provider_id: 8 }, { provider_id: 337 }],
+        vote_average: 7.5,
+        vote_count: 150,
+      },
+      { id: 3, provider_logos: [{ provider_id: 8 }], vote_average: 8.8, vote_count: 500 },
+    ],
+    providerResults: [{}, {}, {}],
+    selectedProviderIds: [8, 337],
+  });
+
+  expect(ranked.recommendations.map((rec) => rec.title)).toEqual([
+    "Strong Match",
+    "Weak Match",
+    "No Match First",
+  ]);
+  expect(ranked.rankingMetrics.matchedRecommendationCount).toBe(2);
+  expect(ranked.rankingMetrics.filteredOutCount).toBe(1);
+  expect(ranked.rankingMetrics.reorderedCount).toBeGreaterThan(0);
+  expect(ranked.rankingMetrics.promotedFirstItem).toBeTruthy();
+});
+
+test("Oracle provider-aware ranking preserves order without preferences", async () => {
+  const ranked = rankRecommendationsByProviderAffinity({
+    recommendations: [{ title: "A" }, { title: "B" }, { title: "C" }],
+    tmdbResults: [{ id: 1 }, { id: 2 }, { id: 3 }],
+    providerResults: [{}, {}, {}],
+    selectedProviderIds: [],
+  });
+
+  expect(ranked.recommendations.map((rec) => rec.title)).toEqual(["A", "B", "C"]);
+  expect(ranked.rankingMetrics.reorderedCount).toBe(0);
+  expect(ranked.rankingMetrics.hasProviderPreferences).toBeFalsy();
+  expect(ranked.rankingMetrics.filteredOutCount).toBe(0);
+});
+

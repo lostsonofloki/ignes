@@ -456,7 +456,7 @@ export async function addMovieToList(listId, tmdbId, userId, movie = {}) {
   let { data, error } = await supabase.from('list_items').insert(row).select().single();
 
   if (error && isAddedByColumnError(error)) {
-    const { added_by, ...fallbackRow } = row;
+    const { added_by: _addedBy, ...fallbackRow } = row;
     const fallbackInsert = await supabase
       .from('list_items')
       .insert(fallbackRow)

@@ -11,6 +11,7 @@ import {
   classifyOracleError,
   trackOracleProviderEventSafe,
 } from "../utils/oracleAnalytics";
+import { rankRecommendationsByProviderAffinity } from "../utils/oracleRanking";
 import { isAbortLikeError } from "../utils/oracleReliability";
 import { fetchTMDBMovie, fetchWatchProviders } from "../api/tmdb";
 
@@ -341,9 +342,20 @@ export function OracleProvider({ children }) {
 
         const { mappedTmdb, providerResponses } = await enrichRecommendationsWithTmdb(aiResponse.recommendations);
         if (!isCurrentRequest(requestId)) return;
-        setRecommendations(aiResponse.recommendations);
-        setTmdbResults(mappedTmdb);
-        setProviderResults(providerResponses);
+        const ranked = rankRecommendationsByProviderAffinity({
+          recommendations: aiResponse.recommendations,
+          tmdbResults: mappedTmdb,
+          providerResults: providerResponses,
+          selectedProviderIds,
+        });
+        setRecommendations(ranked.recommendations);
+        setTmdbResults(ranked.tmdbResults);
+        setProviderResults(ranked.providerResults);
+        orchestrationMeta = {
+          ...(orchestrationMeta || {}),
+          rankingMetrics: ranked.rankingMetrics,
+          selectedProviderIds,
+        };
 
         await recordOracleUse(user?.id);
         if (user?.id) {
@@ -356,8 +368,9 @@ export function OracleProvider({ children }) {
               budgetSource,
               requestSource,
               promptType,
-              recommendationCount: aiResponse.recommendations.length,
-              tmdbHitCount: mappedTmdb.filter(Boolean).length,
+              recommendationCount: ranked.recommendations.length,
+              tmdbHitCount: ranked.tmdbResults.filter(Boolean).length,
+              selectedProviderIds,
             })
           );
         }
@@ -375,7 +388,14 @@ export function OracleProvider({ children }) {
           trackOracleProviderEventSafe(
             buildOracleEventPayload({
               userId: user.id,
-              meta: orchestrationMeta || { provider, modelUsed: statusCode ? `status:${statusCode}` : null },
+              meta:
+                orchestrationMeta ||
+                discoverErr?.oracleMeta ||
+                {
+                  provider,
+                  modelUsed: statusCode ? `status:${statusCode}` : null,
+                  selectedProviderIds,
+                },
               success: false,
               fallbackReason,
               errorCode,
@@ -385,6 +405,7 @@ export function OracleProvider({ children }) {
               budgetSource,
               requestSource,
               promptType,
+              selectedProviderIds,
             })
           );
         }
@@ -400,6 +421,7 @@ export function OracleProvider({ children }) {
       getResolvedQueryConstraints,
       rejectedTitles,
       selectedMood?.prompt,
+      selectedProviderIds,
       tempPrompt,
       user?.id,
       beginOracleRequest,
@@ -418,6 +440,7 @@ export function OracleProvider({ children }) {
   const handleRerollByTmdbId = useCallback(
     async (tmdbId, fallbackTitle = "", fallbackYear = "") => {
       const { requestId, signal } = beginOracleRequest();
+      let rerollMeta = null;
       const fallbackKey = toKey(fallbackTitle, fallbackYear);
       const targetIndex = tmdbResults.findIndex((movie) => movie?.id === tmdbId);
       const byKeyIndex =
@@ -446,6 +469,7 @@ export function OracleProvider({ children }) {
           signal,
         });
         if (!isCurrentRequest(requestId)) return;
+        rerollMeta = aiResponse?._meta || null;
         const nextRec = (aiResponse?.recommendations || []).find(
           (candidate) => !excludedTitles.includes(candidate.title)
         );
@@ -469,12 +493,56 @@ export function OracleProvider({ children }) {
           prev.map((providers, idx) => (idx === byKeyIndex ? nextProviders : providers))
         );
         setRejectedTitles((prev) => [...prev, rejectedTitle].filter(Boolean));
+        if (user?.id) {
+          const promptType = selectedMood?.prompt === tempPrompt ? "mood_preset" : "custom_prompt";
+          trackOracleProviderEventSafe(
+            buildOracleEventPayload({
+              userId: user.id,
+              meta: rerollMeta,
+              success: true,
+              budgetSource: "unknown",
+              requestSource: "reroll_single",
+              promptType,
+              recommendationCount: 1,
+              tmdbHitCount: nextMovie ? 1 : 0,
+              selectedProviderIds,
+            })
+          );
+        }
       } catch (rerollErr) {
         if (isAbortLikeError(rerollErr) || !isCurrentRequest(requestId)) {
           return;
         }
         console.error("Oracle targeted reroll failed:", rerollErr);
         setError(getDiscoveryErrorMessage(rerollErr));
+        if (user?.id) {
+          const promptType = selectedMood?.prompt === tempPrompt ? "mood_preset" : "custom_prompt";
+          const { errorCode, fallbackReason, provider, statusCode, failureBucket, failureStage } =
+            classifyOracleError(rerollErr);
+          trackOracleProviderEventSafe(
+            buildOracleEventPayload({
+              userId: user.id,
+              meta:
+                rerollMeta ||
+                rerollErr?.oracleMeta ||
+                {
+                  provider,
+                  modelUsed: statusCode ? `status:${statusCode}` : null,
+                  selectedProviderIds,
+                },
+              success: false,
+              fallbackReason,
+              errorCode,
+              failureBucket,
+              failureStage,
+              errorMessage: rerollErr?.message || "Unknown error",
+              budgetSource: "unknown",
+              requestSource: "reroll_single",
+              promptType,
+              selectedProviderIds,
+            })
+          );
+        }
       } finally {
         if (isCurrentRequest(requestId)) {
           setIsDiscovering(false);
@@ -487,8 +555,10 @@ export function OracleProvider({ children }) {
       recommendations,
       rejectedTitles,
       selectedProviderIds,
+      selectedMood?.prompt,
       tempPrompt,
       tmdbResults,
+      user?.id,
       beginOracleRequest,
       isCurrentRequest,
     ]

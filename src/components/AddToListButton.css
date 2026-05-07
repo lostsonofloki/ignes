@@ -336,7 +336,9 @@
 /* Responsive adjustments */
 @media (max-width: 640px) {
   .add-to-list-dropdown {
-    right: -16px;
-    width: 280px;
+    right: 0;
+    left: auto;
+    width: min(280px, calc(100vw - 32px));
+    max-width: calc(100vw - 24px);
   }
 }

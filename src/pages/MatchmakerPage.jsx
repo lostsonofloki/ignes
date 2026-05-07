@@ -256,7 +256,7 @@ function MatchmakerPage() {
       <div className="matchmaker-container">
         {/* Header */}
         <div className="matchmaker-header">
-          <h1 className="matchmaker-title font-creepster">The Matchmaker</h1>
+          <h1 className="matchmaker-title">The Matchmaker</h1>
           <p className="matchmaker-subtitle">
             Find your movie soulmate. Compare tastes, discover conflicts, and see your Synergy Score.
           </p>

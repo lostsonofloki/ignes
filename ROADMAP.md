@@ -6,15 +6,15 @@ A phased approach to building Filmgraph from a static UI to a fully-featured mov
 
 ## 🔥 Immediate Priority: Oracle Intelligence Pass (Phase 7.9)
 
-**Status**: 🟡 **Partially Complete (Sprints A-C shipped; follow-ons deferred)**  
-**Priority**: 🔥 **Critical (Deferred Follow-Ons)**
+**Status**: ✅ **Complete (Sprints A-C + follow-ons shipped)**  
+**Priority**: ✅ **Shipped**
 
 Use this as the primary execution track when Oracle work resumes.
 
 ### Quick Jump
 
 - Full section: **Phase 7.9: Oracle Intelligence Pass 🧠**
-- Deferred implementation plan: **Deferred Sprint Checklist (Now Track)**
+- Implementation checklist: **Deferred Sprint Checklist (Now Track)**
   - **Sprint A**: Query Intelligence
   - **Sprint B**: Taste Weighting
   - **Sprint C**: Reliability Hardening
@@ -276,14 +276,18 @@ GET /?apikey={key}&i={imdb_id}&plot=full
 | 6.5  | **Mobile App (Deferred)**    | React Native version for iOS/Android (pushed back)           | ⏸️     |
 | 6.6  | **Light Mode**               | Theme toggle (currently dark mode only)                      | ⬜     |
 | 6.7  | **Social Features**          | Friends, following, and activity feeds                       | ✅     |
-| 6.8  | **Year in Review**           | Annual wrapped-style statistics summary                      | ⬜     |
+| 6.8  | **Year in Review**           | Annual wrapped-style statistics summary                      | ✅     |
 | 6.9  | **Custom Lists**             | User-created movie collections                               | ✅     |
-| 6.10 | **Advanced Search**          | Multi-criteria search (Mood, Genre, Rating)                  | ⬜     |
+| 6.10 | **Advanced Search**          | Multi-criteria search (Mood, Genre, Rating)                  | ✅     |
 | 6.11 | **The Archive Importer**     | Mass import tool for migrating movie lists                   | ✅     |
 | 6.12 | **Bug Report System**        | In-app bug reporting with admin dashboard                    | ✅     |
 | 6.13 | **The Oracle**               | Conversational AI Librarian using personal logs              | ✅     |
 | 6.14 | **The Matchmaker**           | Compare watch-lists & mood overlaps with friends             | ✅     |
 | 6.15 | **High-Speed AI Ensemble**   | Groq LPU integration for sub-500ms vibe-to-genre translation | ✅     |
+
+### Phase 6.8: Year in Review — ADR
+
+Implementation decisions (canonical dates, timezone, Tier 1 metrics, client aggregation) are recorded in **[artifacts/adr-year-in-review.md](artifacts/adr-year-in-review.md)**.
 
 ### Deliverables
 
@@ -1043,12 +1047,12 @@ User Query → Groq LPU (llama-3.3-70b-versatile) → Genre IDs (300-600ms)
 
 ## Phase 7.9: Oracle Intelligence Pass 🧠
 
-**Status**: 🟡 **Partially Complete (Sprints A-C shipped; follow-ons deferred)**
-**Priority**: 🔥 **Critical (Deferred Follow-Ons)**
+**Status**: ✅ **Complete (Sprints A-C + follow-ons shipped)**
+**Priority**: ✅ **Shipped**
 
 **Goal**: Make Oracle recommendations smarter, stricter, and more resilient by enforcing post-generation quality checks and improving recommendation relevance.
 
-> **Execution Note**: Sprint A/B/C integration is complete in the current release pass; keep this track prioritized for follow-up work in telemetry expansion (`7.9.4`) and provider-aware relevance ranking (`7.9.5`).
+> **Execution Note**: Sprint A/B/C integration shipped first, followed by `7.9.4` telemetry expansion and `7.9.5` provider-aware ranking in the same stabilization pass.
 
 ### Ranked Implementation Order (Now / Next / Later)
 
@@ -1117,8 +1121,8 @@ User Query → Groq LPU (llama-3.3-70b-versatile) → Genre IDs (300-600ms)
 | 7.9.1 | **Post-Generation Guardrails** | Normalize and validate recommendation payloads (dedupe, rejected-title exclusion, schema safety). | ✅ |
 | 7.9.2 | **Quality Floor Enforcement** | Enforce 3-5 high-quality recommendations and top-up with deterministic fallback when model output is thin. | ✅ |
 | 7.9.3 | **Cross-Provider Consistency** | Apply the same guardrails to Gemini and OpenRouter responses before UI render. | ✅ |
-| 7.9.4 | **Oracle Telemetry Expansion** | Add smarter quality metrics (dedupe drops, rejection-violation attempts, post-filter counts). | ⏳ |
-| 7.9.5 | **Provider-Aware Relevance Ranking** | Prioritize suggestions likely available on selected streaming providers before final card ordering. | ⏳ |
+| 7.9.4 | **Oracle Telemetry Expansion** | Add smarter quality metrics (dedupe drops, rejection-violation attempts, post-filter counts) plus provider-attempt traces (`provider_attempts` JSON) with additive `oracle_provider_events` compatibility. | ✅ |
+| 7.9.5 | **Provider-Aware Relevance Ranking** | Prioritize suggestions likely available on selected streaming providers before final card ordering. | ✅ |
 | 7.9.6 | **Taste-Profile Context Hydration** | Build richer user taste context from moods, genres, ratings, decades, recency, and avoid-signals before Oracle generation. | ✅ |
 
 ### Success Criteria
@@ -1127,8 +1131,8 @@ User Query → Groq LPU (llama-3.3-70b-versatile) → Genre IDs (300-600ms)
 - [x] Rejected titles are excluded with case-insensitive matching.
 - [x] Oracle returns a stable 3-5 recommendation set whenever providers are available.
 - [x] Oracle prompt context reflects user vibe patterns (moods/genres/ratings/decades/recency), not just raw title history.
-- [ ] Analytics captures recommendation quality signals for ongoing tuning.
-- [ ] Provider-aware ranking improves watch-now conversion in discovery flow.
+- [x] Analytics captures recommendation quality signals for ongoing tuning.
+- [x] Provider-aware ranking prioritizes provider-matched results while preserving reorder-only behavior and reroll index safety.
 
 ---
 

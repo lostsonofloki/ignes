@@ -160,7 +160,7 @@ function ArchiveImporterModal({ onClose, onImportComplete }) {
         };
 
         if (listError && isAddedByColumnError(listError)) {
-          const fallbackItems = listItemsToAdd.map(({ added_by, ...item }) => item);
+          const fallbackItems = listItemsToAdd.map(({ added_by: _addedBy, ...item }) => item);
           const fallback = await supabase
             .from('list_items')
             .upsert(fallbackItems, {

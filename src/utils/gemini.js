@@ -368,6 +368,18 @@ const normalizeYear = (year) => {
 const buildRecommendationKey = (title, year) =>
   `${normalizeTitle(title)}::${normalizeYear(year)}`;
 
+const toNonNegativeInt = (value, fallback = 0) => {
+  const parsed = Number.parseInt(String(value), 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return fallback;
+  return parsed;
+};
+
+const cleanAttemptText = (value) => {
+  if (value == null) return null;
+  const trimmed = String(value).trim();
+  return trimmed ? trimmed.slice(0, 120) : null;
+};
+
 const hasYearConstraint = (constraints) =>
   Number.isFinite(constraints?.yearMin) || Number.isFinite(constraints?.yearMax);
 
@@ -399,21 +411,31 @@ const sanitizeRecommendations = (
   rejectedTitles = [],
   queryConstraints = null,
 ) => {
+  const source = Array.isArray(recommendations) ? recommendations : [];
   const rejectedSet = new Set(rejectedTitles.map((title) => normalizeTitle(title)));
   const seen = new Set();
   const cleaned = [];
+  let dedupeDroppedCount = 0;
+  let rejectedViolationAttemptCount = 0;
 
-  for (const rec of recommendations || []) {
+  for (const rec of source) {
     if (!rec || typeof rec !== "object") continue;
     const title = String(rec.title || "").trim();
     if (!title) continue;
 
     const normalizedTitle = normalizeTitle(title);
-    if (!normalizedTitle || rejectedSet.has(normalizedTitle)) continue;
+    if (!normalizedTitle) continue;
+    if (rejectedSet.has(normalizedTitle)) {
+      rejectedViolationAttemptCount += 1;
+      continue;
+    }
 
     const year = normalizeYear(rec.year);
     const key = buildRecommendationKey(title, year);
-    if (seen.has(key)) continue;
+    if (seen.has(key)) {
+      dedupeDroppedCount += 1;
+      continue;
+    }
     seen.add(key);
 
     cleaned.push({
@@ -424,9 +446,16 @@ const sanitizeRecommendations = (
     });
   }
 
-  return cleaned.filter((rec) =>
-    recommendationMeetsConstraints(rec, queryConstraints),
-  );
+  return {
+    recommendations: cleaned.filter((rec) =>
+      recommendationMeetsConstraints(rec, queryConstraints),
+    ),
+    metrics: {
+      inputRecommendationCount: source.length,
+      dedupeDroppedCount,
+      rejectedViolationAttemptCount,
+    },
+  };
 };
 
 const ensureRecommendationQuality = async ({
@@ -440,11 +469,15 @@ const ensureRecommendationQuality = async ({
   const MIN_RECOMMENDATIONS = 3;
   const MAX_RECOMMENDATIONS = 5;
 
-  let cleaned = sanitizeRecommendations(
+  const initialSanitize = sanitizeRecommendations(
     recommendations,
     rejectedTitles,
     queryConstraints,
-  ).slice(0, MAX_RECOMMENDATIONS);
+  );
+  let cleaned = initialSanitize.recommendations.slice(0, MAX_RECOMMENDATIONS);
+  let dedupeDroppedCount = initialSanitize.metrics.dedupeDroppedCount;
+  let rejectedViolationAttemptCount =
+    initialSanitize.metrics.rejectedViolationAttemptCount;
 
   if (cleaned.length < MIN_RECOMMENDATIONS) {
     try {
@@ -460,7 +493,10 @@ const ensureRecommendationQuality = async ({
         rejectedTitles,
         queryConstraints,
       );
-      cleaned = merged.slice(0, MAX_RECOMMENDATIONS);
+      dedupeDroppedCount += merged.metrics.dedupeDroppedCount;
+      rejectedViolationAttemptCount +=
+        merged.metrics.rejectedViolationAttemptCount;
+      cleaned = merged.recommendations.slice(0, MAX_RECOMMENDATIONS);
     } catch (_fallbackError) {
       // Keep existing cleaned results if fallback cannot top up.
     }
@@ -470,7 +506,17 @@ const ensureRecommendationQuality = async ({
     throw new Error("No valid recommendations after filtering.");
   }
 
-  return cleaned;
+  return {
+    recommendations: cleaned,
+    qualityMetrics: {
+      inputRecommendationCount: initialSanitize.metrics.inputRecommendationCount,
+      postFilterRecommendationCount: cleaned.length,
+      dedupeDroppedCount: toNonNegativeInt(dedupeDroppedCount),
+      rejectedViolationAttemptCount: toNonNegativeInt(
+        rejectedViolationAttemptCount,
+      ),
+    },
+  };
 };
 
 const buildTmdbFallbackRecommendations = async (
@@ -894,7 +940,46 @@ export const getHybridRecommendation = async (vibe, options = {}) => {
 
   let genreIds = [];
   let groqSuccess = false;
-  let startTime = performance.now();
+  const startTime = performance.now();
+  let geminiAttemptStart = null;
+  let openRouterAttemptStart = null;
+  let tmdbAttemptStart = null;
+  const providerAttempts = [];
+  const pushAttempt = ({
+    provider,
+    model,
+    result,
+    status = null,
+    failureBucket = null,
+    attemptStartTime = null,
+  }) => {
+    const latencyMs =
+      typeof attemptStartTime === "number"
+        ? Math.max(0, Math.round(performance.now() - attemptStartTime))
+        : null;
+    providerAttempts.push({
+      provider: cleanAttemptText(provider),
+      model: cleanAttemptText(model),
+      result: cleanAttemptText(result) || "unknown",
+      status: cleanAttemptText(status),
+      failure_bucket: cleanAttemptText(failureBucket),
+      latency_ms: latencyMs,
+    });
+  };
+  const buildAttemptMetrics = (successProvider = null) => {
+    const successIndex = providerAttempts.findIndex(
+      (attempt) => attempt.provider === successProvider && attempt.result === "success",
+    );
+    const providerAttemptCount = providerAttempts.length;
+    return {
+      providerAttemptCount,
+      fallbackDepth:
+        successIndex >= 0
+          ? successIndex
+          : Math.max(0, providerAttemptCount > 0 ? providerAttemptCount - 1 : 0),
+      providerAttempts,
+    };
+  };
 
   // Step 1: Try Groq for fast genre extraction (target: sub-500ms)
   try {
@@ -966,6 +1051,7 @@ Format:
 }`;
 
   try {
+    geminiAttemptStart = performance.now();
     const { parsed, modelUsed } = await runGeminiWithFallback(
       prompt,
       {
@@ -984,15 +1070,23 @@ Format:
       },
       { signal },
     );
-
-    const smartRecommendations = await ensureRecommendationQuality({
-      recommendations: parsed.recommendations,
-      vibe,
-      rejectedTitles,
-      genreIds,
-      queryConstraints,
-      signal,
+    pushAttempt({
+      provider: "gemini",
+      model: modelUsed,
+      result: "success",
+      status: "ok",
+      attemptStartTime: geminiAttemptStart,
     });
+
+    const { recommendations: smartRecommendations, qualityMetrics } =
+      await ensureRecommendationQuality({
+        recommendations: parsed.recommendations,
+        vibe,
+        rejectedTitles,
+        genreIds,
+        queryConstraints,
+        signal,
+      });
 
     return {
       recommendations: smartRecommendations,
@@ -1004,13 +1098,24 @@ Format:
         latency: groqSuccess
           ? `${Math.round(performance.now() - startTime)}ms`
           : "fallback",
+        qualityMetrics,
+        attemptMetrics: buildAttemptMetrics("gemini"),
       },
     };
   } catch (error) {
     if (isAbortLikeError(error)) throw error;
+    pushAttempt({
+      provider: "gemini",
+      model: null,
+      result: "failure",
+      status: extractStatusCode(error),
+      failureBucket: getOracleFailureBucket(error),
+      attemptStartTime: geminiAttemptStart,
+    });
     console.error("❌ Hybrid recommendation failed:", error.message);
 
     try {
+      openRouterAttemptStart = performance.now();
       const { parsed, modelUsed } = await runOpenRouterWithFallback(
         prompt,
         {
@@ -1028,15 +1133,23 @@ Format:
         },
         { signal },
       );
-
-      const smartRecommendations = await ensureRecommendationQuality({
-        recommendations: parsed.recommendations,
-        vibe,
-        rejectedTitles,
-        genreIds,
-        queryConstraints,
-        signal,
+      pushAttempt({
+        provider: "openrouter",
+        model: modelUsed,
+        result: "success",
+        status: "ok",
+        attemptStartTime: openRouterAttemptStart,
       });
+
+      const { recommendations: smartRecommendations, qualityMetrics } =
+        await ensureRecommendationQuality({
+          recommendations: parsed.recommendations,
+          vibe,
+          rejectedTitles,
+          genreIds,
+          queryConstraints,
+          signal,
+        });
 
       return {
         recommendations: smartRecommendations,
@@ -1047,14 +1160,25 @@ Format:
           modelUsed,
           latency: `${Math.round(performance.now() - startTime)}ms`,
           fallbackReason: "gemini_unavailable",
+          qualityMetrics,
+          attemptMetrics: buildAttemptMetrics("openrouter"),
         },
       };
     } catch (openRouterError) {
       if (isAbortLikeError(openRouterError)) throw openRouterError;
+      pushAttempt({
+        provider: "openrouter",
+        model: null,
+        result: "failure",
+        status: extractStatusCode(openRouterError),
+        failureBucket: getOracleFailureBucket(openRouterError),
+        attemptStartTime: openRouterAttemptStart,
+      });
       console.warn("⚠️ OpenRouter fallback failed:", openRouterError.message);
     }
 
     try {
+      tmdbAttemptStart = performance.now();
       const fallbackRecommendations = await buildTmdbFallbackRecommendations(
         vibe,
         genreIds,
@@ -1062,8 +1186,26 @@ Format:
         queryConstraints,
         { signal },
       );
-      return {
+      pushAttempt({
+        provider: "tmdb",
+        model: "tmdb-fallback",
+        result: "success",
+        status: "ok",
+        attemptStartTime: tmdbAttemptStart,
+      });
+      const {
+        recommendations: qualityCheckedFallbackRecommendations,
+        qualityMetrics,
+      } = await ensureRecommendationQuality({
         recommendations: fallbackRecommendations,
+        vibe,
+        rejectedTitles,
+        genreIds,
+        queryConstraints,
+        signal,
+      });
+      return {
+        recommendations: qualityCheckedFallbackRecommendations,
         _meta: {
           provider: "tmdb",
           groqUsed: groqSuccess,
@@ -1071,16 +1213,34 @@ Format:
           modelUsed: "tmdb-fallback",
           latency: `${Math.round(performance.now() - startTime)}ms`,
           fallbackReason: "gemini_unavailable",
+          qualityMetrics,
+          attemptMetrics: buildAttemptMetrics("tmdb"),
         },
       };
     } catch (fallbackError) {
       if (isAbortLikeError(fallbackError)) throw fallbackError;
+      pushAttempt({
+        provider: "tmdb",
+        model: "tmdb-fallback",
+        result: "failure",
+        status: extractStatusCode(fallbackError),
+        failureBucket: getOracleFailureBucket(fallbackError),
+        attemptStartTime: tmdbAttemptStart,
+      });
       console.error("❌ TMDB fallback failed:", fallbackError.message);
-      throw withTaggedError(
+      const orchestrationError = withTaggedError(
         "All recommendation providers are unavailable. Please try again shortly.",
         "orchestration",
         extractStatusCode(fallbackError),
       );
+      orchestrationError.oracleMeta = {
+        provider: "orchestration",
+        groqUsed: groqSuccess,
+        genreIds,
+        fallbackReason: "all_providers_unavailable",
+        attemptMetrics: buildAttemptMetrics(null),
+      };
+      throw orchestrationError;
     }
   }
 };

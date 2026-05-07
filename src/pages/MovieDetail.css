@@ -41,6 +41,34 @@
   margin: 0;
 }
 
+.movie-not-found-state {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 1rem;
+  background: #0a0a0a;
+}
+
+.movie-not-found-title {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 800;
+  color: #f97316;
+  margin: 0 0 1rem;
+  letter-spacing: -0.03em;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.movie-not-found-copy {
+  font-size: 1rem;
+  color: #a1a1aa;
+  margin: 0 0 2rem;
+  max-width: 28rem;
+  line-height: 1.55;
+}
+
 .back-button {
   padding: 12px 24px;
   font-size: 14px;

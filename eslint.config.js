@@ -6,7 +6,16 @@ import globals from 'globals';
 
 export default [
   {
+    settings: {
+      react: {
+        version: 'detect',
+      },
+    },
+  },
+  {
     ignores: [
+      'android/**',
+      'public/sw.js',
       'dist/**',
       'node_modules/**',
       'coverage/**',

@@ -94,7 +94,7 @@
 .backdrop-card {
   cursor: pointer;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   transition: transform 0.2s ease;
 }
 
@@ -106,10 +106,18 @@
   position: relative;
   padding-top: 56.25%;
   background: #1a1a1a;
-  overflow: hidden;
+  overflow: visible;
 }
 
-.backdrop-image-wrapper img {
+/* Clip only the media so list dropdowns / quick actions are not cut off */
+.backdrop-media-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.backdrop-media-clip img {
   position: absolute;
   top: 0;
   left: 0;
@@ -119,11 +127,11 @@
   transition: transform 0.3s ease;
 }
 
-.backdrop-card:hover .backdrop-image-wrapper img {
+.backdrop-card:hover .backdrop-media-clip img {
   transform: scale(1.05);
 }
 
-.no-backdrop {
+.backdrop-media-clip .no-backdrop {
   position: absolute;
   top: 0;
   left: 0;

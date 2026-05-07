@@ -552,15 +552,13 @@ function ProfilePage() {
           )}
         </div>
 
-        {/* Social Hub Section */}
+        {/* Streaming preferences */}
         <div className="social-hub-section">
-          <div className="social-hub-header">
-            <h2 className="social-hub-title font-creepster">Streaming Preferences</h2>
-          </div>
-          <p className="profile-email" style={{ marginBottom: "10px" }}>
+          <h2 className="insights-title">Streaming Preferences</h2>
+          <p className="streaming-preferences-hint">
             Pick services you currently have. Oracle uses this to guide recommendations.
           </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+          <div className="streaming-preferences-chips">
             {TOP_STREAMING_PROVIDERS_US.map((provider) => {
               const active = userProviders.includes(provider.id);
               return (
@@ -585,7 +583,7 @@ function ProfilePage() {
         {/* Social Hub Section */}
         <div className="social-hub-section">
           <div className="social-hub-header">
-            <h2 className="social-hub-title font-creepster">
+            <h2 className="social-hub-title">
               <svg
                 className="social-hub-icon"
                 viewBox="0 0 24 24"
@@ -735,6 +733,16 @@ function ProfilePage() {
             </span>
             <span className="stat-label">Physical Owned</span>
           </div>
+        </div>
+
+        <div className="profile-year-recap">
+          <Link to="/year-in-review" className="profile-year-recap-link">
+            Year in Review
+          </Link>
+          <p className="profile-year-recap-hint">
+            Wrapped-style recap for any calendar year — ratings, genres, moods,
+            and more.
+          </p>
         </div>
 
         {/* Movie Insights */}

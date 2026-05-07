@@ -102,10 +102,18 @@ function AddToListButton({ movie, className = '', variant = 'default' }) {
             disabled={isLoading}
             aria-expanded={isOpen}
             aria-haspopup="true"
+            aria-label={
+              existingLists.length > 0
+                ? `Add to another list — already in ${existingLists.length}`
+                : 'Add to a list'
+            }
             title={existingLists.length > 0 ? `In ${existingLists.length} list(s)` : 'Add to list'}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none" />
+              <circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none" />
+              <circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none" />
+              <path strokeLinecap="round" d="M9 6h11M9 12h11M9 18h8" />
             </svg>
             {existingLists.length > 0 && (
               <span className="add-to-list-badge">{existingLists.length}</span>
@@ -120,8 +128,11 @@ function AddToListButton({ movie, className = '', variant = 'default' }) {
             aria-haspopup="true"
             title={existingLists.length > 0 ? `In ${existingLists.length} list(s)` : 'Add to list'}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none" />
+              <circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none" />
+              <circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none" />
+              <path strokeLinecap="round" d="M9 6h11M9 12h11M9 18h8" />
             </svg>
             <span>Add to List</span>
             {existingLists.length > 0 && (
