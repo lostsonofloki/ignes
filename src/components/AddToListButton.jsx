@@ -24,6 +24,7 @@ function AddToListButton({ movie, className = '', variant = 'default' }) {
   } = useLists();
   const toast = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPlacement, setDropdownPlacement] = useState('end');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isAdding, setIsAdding] = useState(null); // tmdb_id of movie being added
   const dropdownRef = useRef(null);
@@ -41,6 +42,41 @@ function AddToListButton({ movie, className = '', variant = 'default' }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen || !dropdownRef.current) return;
+
+    const updatePlacement = () => {
+      if (!dropdownRef.current) return;
+
+      const rect = dropdownRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+      const horizontalPadding = 12;
+      const preferredWidth = 300;
+      const maxAllowed = Math.max(220, viewportWidth - horizontalPadding * 2);
+      const dropdownWidth = Math.min(preferredWidth, maxAllowed);
+
+      const spaceIfStart = viewportWidth - rect.left - horizontalPadding;
+      const spaceIfEnd = rect.right - horizontalPadding;
+
+      if (spaceIfStart >= dropdownWidth) {
+        setDropdownPlacement('start');
+      } else if (spaceIfEnd >= dropdownWidth) {
+        setDropdownPlacement('end');
+      } else {
+        setDropdownPlacement(spaceIfStart >= spaceIfEnd ? 'start' : 'end');
+      }
+    };
+
+    updatePlacement();
+    window.addEventListener('resize', updatePlacement);
+    window.addEventListener('scroll', updatePlacement, true);
+
+    return () => {
+      window.removeEventListener('resize', updatePlacement);
+      window.removeEventListener('scroll', updatePlacement, true);
+    };
+  }, [isOpen]);
 
   const handleToggleDropdown = () => {
     if (!isAuthenticated) return;
@@ -142,7 +178,7 @@ function AddToListButton({ movie, className = '', variant = 'default' }) {
         )}
 
         {isOpen && (
-          <div className="add-to-list-dropdown">
+          <div className={`add-to-list-dropdown add-to-list-dropdown--${dropdownPlacement}`}>
             {isLoading ? (
               <div className="add-to-list-loading">
                 <div className="loading-spinner"></div>
