@@ -61,6 +61,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.12.23] - May 13, 2026
+
+### Changed
+
+- **Oracle / Gemini:** Reordered the Gemini model ladder to try **`gemini-2.0-flash` before `gemini-3.1-flash-lite`** for lower typical latency; **`gemini-3.1-flash-lite`** remains next in the chain so API keys that lack 2.0 or hit 2.0-only errors still get a modern GA fallback, followed by the existing 2.x / 1.5 model IDs before downstream OpenRouter and TMDB fallbacks.
+
+---
+
+## [1.12.22] - May 12, 2026
+
+### Changed
+
+- **Oracle:** Gemini ladder now tries **`gemini-3.1-flash-lite` (GA)** first, with existing Gemini 2.x / 1.5 model IDs as fallbacks when a candidate is unavailable or errors (Google preview retirement).
+
+---
+
 ## [1.12.21] - May 6, 2026
 
 ### Fixed

@@ -54,9 +54,13 @@ if (!apiKey) {
 
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
-// Keep a model ladder because Google model availability can change per key/project.
+// Model ladder: Google availability varies by key/project. Order is latency-first for Oracle —
+// `gemini-2.0-flash` tends to answer faster than leading with 3.1; if 2.0 errors/unavailable,
+// we still try `gemini-3.1-flash-lite` and older IDs before giving up (avoids paying a slow or
+// failed first attempt then full timeout on the next slot).
 const GEMINI_MODEL_CANDIDATES = [
   "gemini-2.0-flash",
+  "gemini-3.1-flash-lite",
   "gemini-2.0-flash-lite",
   "gemini-1.5-flash-latest",
   "gemini-1.5-pro-latest",

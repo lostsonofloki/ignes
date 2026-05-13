@@ -653,7 +653,7 @@ $ git log --all --full-history -- .env
 1. **User Submits Vibe Query** - "I want something dark and mind-bending"
 2. **Groq LPU Processing** - `llama-3.3-70b-versatile` instantly parses natural language → genre IDs (300-600ms)
 3. **Latency Achieved** - Sub-500ms average response for vibe-to-genre translation ✅
-4. **Gemini Deep Reasoning** - Complex recommendations use Gemini 3.1 Flash Lite Preview
+4. **Gemini Deep Reasoning** - Oracle walks a **Gemini model ladder** (see `src/utils/gemini.js`): **`gemini-2.0-flash` before `gemini-3.1-flash-lite`** for lower typical latency, then additional 2.x / 1.5 IDs when a candidate is unavailable or errors.
 5. **Multi-Movie Response** - 3-5 curated films with fast genre mapping + rich cinematic analysis
 
 ### Architecture (Live)
@@ -661,7 +661,7 @@ $ git log --all --full-history -- .env
 ```
 User Query → Groq LPU (llama-3.3-70b-versatile) → Genre IDs (300-600ms)
            ↓
-    Gemini 3.1 Flash Lite → 3-5 Movies + Deep Analysis + Rationale
+    Gemini ladder (2.0 Flash → 3.1 Flash Lite (GA) → …) → 3-5 Movies + Deep Analysis + Rationale
            ↓
     Oracle UI → Posters + Years + "Why Filmgraph Picked This" (per movie)
 ```
@@ -703,11 +703,10 @@ User Query → Groq LPU (llama-3.3-70b-versatile) → Genre IDs (300-600ms)
 > **Current**: `llama-3.3-70b-versatile` is the production model.
 > **Watch**: Monitor Groq docs for `openai/gpt-oss-120b` — the newer production king may offer better latency/cost ratio for sub-500ms targets.
 
-#### Gemini 3.1 Flash Lite Preview Stability
+#### Gemini model ladder (latency + reliability)
 
-> **Status**: This model has shown 503 errors in production.
-> **Mitigation**: The hybrid orchestration includes automatic fallback to Gemini-only mode when Preview models fail.
-> **Long-term**: Consider migrating to stable Gemini 2.0 Flash for production reliability.
+> **Order (v1.12.23+)**: Oracle tries **`gemini-2.0-flash` before `gemini-3.1-flash-lite`** for lower typical latency, then continues through additional Gemini 2.x / 1.5 model IDs when needed.
+> **Mitigation**: The ladder handles quota, 404, and transient errors; **OpenRouter** and **TMDB** remain downstream fallbacks when all Gemini candidates fail.
 
 #### Phase 6.14 "Matchmaker" — Technically Unlocked ✅
 
