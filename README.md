@@ -201,6 +201,14 @@ If `VERCEL_TOKEN` is missing, the workflow exits gracefully and publishes a setu
 
 See [ROADMAP.md](./ROADMAP.md) for the detailed development plan.
 
+### Supabase Agent Skills (Cursor)
+
+Official [Supabase Agent Skills](https://github.com/supabase/agent-skills) are vendored under `.agents/skills/` for better RLS and client-library guidance in AI-assisted edits. To install or refresh:
+
+```bash
+npx skills add supabase/agent-skills
+```
+
 ### Current Status: Phase 6 In Progress 🚀
 
 **Phase 5: AI Integration** is complete with:

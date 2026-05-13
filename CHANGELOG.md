@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Development
+
+- Added official [Supabase Agent Skills](https://github.com/supabase/agent-skills) under `.agents/skills/` (`supabase`, `supabase-postgres-best-practices`) for Cursor and other agents. Refresh with `npx skills add supabase/agent-skills`.
+
 ### 🧪 Next
 
 - **UX overhaul sprint (Phase 7.6)**
