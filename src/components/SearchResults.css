@@ -46,7 +46,7 @@
 .movie-card {
   background: #121212;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
   transition: transform 0.2s ease;
   display: flex;
   flex-direction: column;
@@ -57,6 +57,14 @@
   position: relative;
   padding-top: 150%;
   background: #1a1a1a;
+  overflow: visible;
+}
+
+.movie-card-poster-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
 }
 
 .search-card-quick-actions {
@@ -66,7 +74,7 @@
   z-index: 3;
 }
 
-.movie-card-poster img {
+.movie-card-poster-clip img {
   position: absolute;
   top: 0;
   left: 0;

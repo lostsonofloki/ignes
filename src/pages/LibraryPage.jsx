@@ -11,7 +11,14 @@ import ArchiveImporterModal from '../components/ArchiveImporterModal';
 import { MovieGridSkeleton } from '../components/Skeleton';
 import { runPosterMigration } from '../utils/posterMigration';
 import { parseLibraryQuery } from '../utils/naturalLanguageSort';
+import {
+  movieMatchesGenreFilter,
+  movieMatchesMoodFilter,
+  movieMatchesRatingFilter,
+  normalizeNlMoodToken,
+} from '../utils/libraryAdvancedSearch';
 import { buildListSharePayload, buildMovieSharePayload, executeShare } from '../utils/share';
+import LibraryAdvancedFilters from '../components/LibraryAdvancedFilters';
 import SeoHead from '../components/seo/SeoHead';
 import './LibraryPage.css';
 
@@ -58,6 +65,11 @@ function LibraryPage() {
   const [collabActionLoading, setCollabActionLoading] = useState('');
   const [parsedQuery, setParsedQuery] = useState(parseLibraryQuery(''));
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [advancedMoods, setAdvancedMoods] = useState([]);
+  const [moodMatchMode, setMoodMatchMode] = useState('any');
+  const [advancedGenres, setAdvancedGenres] = useState([]);
+  const [minRating, setMinRating] = useState('');
+  const [maxRating, setMaxRating] = useState('');
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -326,10 +338,25 @@ function LibraryPage() {
   const filteredMovies = movies.filter((movie) => {
     const normalizedSearch = (parsedQuery.searchText || searchQuery).toLowerCase();
     const matchesSearch = movie.title.toLowerCase().includes(normalizedSearch);
-    const matchesMood = !selectedMood || (movie.moods && movie.moods.includes(selectedMood));
+
+    let moodIdsForFilter = [];
+    let moodMode = moodMatchMode;
+    if (advancedMoods.length > 0) {
+      moodIdsForFilter = advancedMoods;
+    } else {
+      const single =
+        selectedMood || normalizeNlMoodToken(parsedQuery.mood || '');
+      moodIdsForFilter = single ? [single] : [];
+      moodMode = 'any';
+    }
+    const matchesMood = movieMatchesMoodFilter(movie, moodIdsForFilter, moodMode);
+
+    const matchesGenre = movieMatchesGenreFilter(movie, advancedGenres);
+    const matchesRating = movieMatchesRatingFilter(movie, minRating, maxRating);
+
     const runtimeValue = Number(movie.runtime_minutes || movie.runtime || 0);
     const matchesRuntime = !parsedQuery.maxRuntime || !runtimeValue || runtimeValue <= parsedQuery.maxRuntime;
-    return matchesSearch && matchesMood && matchesRuntime;
+    return matchesSearch && matchesMood && matchesGenre && matchesRating && matchesRuntime;
   });
 
   const sortedMovies = [...filteredMovies].sort((a, b) => {
@@ -343,7 +370,28 @@ function LibraryPage() {
     }
   });
 
-  const allMoods = [...new Set(movies.flatMap((m) => m.moods || []))];
+  const allGenresInShelf = [
+    ...new Set(
+      movies.flatMap((m) =>
+        Array.isArray(m.genres) ? m.genres.filter(Boolean) : [],
+      ),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+
+  const handleToggleGenre = (genre) => {
+    setAdvancedGenres((prev) =>
+      prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre],
+    );
+  };
+
+  const handleClearAdvancedFilters = () => {
+    setAdvancedMoods([]);
+    setAdvancedGenres([]);
+    setMinRating('');
+    setMaxRating('');
+    setMoodMatchMode('any');
+    setSelectedMood('');
+  };
 
   const shelfCountLabel =
     activeTab === 'lists'
@@ -728,24 +776,6 @@ function LibraryPage() {
                   />
                   <p className="library-filter-hint">Natural language updates mood, sort, and filters when it recognizes them.</p>
                 </div>
-                {allMoods.length > 0 && (
-                  <div className="library-filter-field">
-                    <label htmlFor="library-mood" className="library-filter-label">Mood</label>
-                    <select
-                      id="library-mood"
-                      value={selectedMood}
-                      onChange={(e) => setSelectedMood(e.target.value)}
-                      className="library-select"
-                    >
-                      <option value="">All moods</option>
-                      {allMoods.map((mood) => (
-                        <option key={mood} value={mood}>
-                          {mood.charAt(0).toUpperCase() + mood.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
                 <div className="library-filter-field">
                   <label htmlFor="library-sort" className="library-filter-label">Sort</label>
                   <select
@@ -761,6 +791,20 @@ function LibraryPage() {
                     ))}
                   </select>
                 </div>
+                <LibraryAdvancedFilters
+                  selectedMoods={advancedMoods}
+                  onMoodsChange={setAdvancedMoods}
+                  moodMatchMode={moodMatchMode}
+                  onMoodMatchModeChange={setMoodMatchMode}
+                  genreOptions={allGenresInShelf}
+                  selectedGenres={advancedGenres}
+                  onToggleGenre={handleToggleGenre}
+                  minRating={minRating}
+                  maxRating={maxRating}
+                  onMinRatingChange={setMinRating}
+                  onMaxRatingChange={setMaxRating}
+                  onClearAdvanced={handleClearAdvancedFilters}
+                />
               </div>
             </section>
 
@@ -814,6 +858,7 @@ function LibraryPage() {
           onSaved={(updated) => {
             setMovies(movies.map((m) => (m.id === updated.id ? updated : m)));
             setShowEditModal(false);
+            toast.success(`"${updated?.title || editingMovie?.title || 'Movie'}" logged successfully!`);
           }}
         />
       )}
@@ -842,9 +887,9 @@ function LibraryPage() {
         <LogMovieModal
           movie={null}
           onClose={() => setShowScanModal(false)}
-          onSaved={() => {
+          onSaved={(saved) => {
             setShowScanModal(false);
-            toast.success('Scanned movie added to your library.');
+            toast.success(`"${saved?.title || 'Movie'}" logged successfully!`);
             fetchMovies();
           }}
         />

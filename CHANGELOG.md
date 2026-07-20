@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Development
+
+- Added official [Supabase Agent Skills](https://github.com/supabase/agent-skills) under `.agents/skills/` (`supabase`, `supabase-postgres-best-practices`) for Cursor and other agents. Refresh with `npx skills add supabase/agent-skills`.
+
 ### 🧪 Next
 
 - **UX overhaul sprint (Phase 7.6)**
@@ -28,6 +32,126 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Refactored Oracle recommendation rendering into `OracleContext` + `ResultCard` and fixed reroll regression so single-card rerolls replace only the targeted recommendation instead of globally refreshing the entire set.
   - Added Oracle streaming context badges by mapping TMDB provider logos and rendering matched `user_providers` directly on each result card.
   - Added list-membership race guard migration (`list_members` dedupe + unique index on `list_id,user_id`) and hardened shared-list API writes with `upsert(..., { onConflict: 'list_id,user_id' })`.
+- **Oracle intelligence pass (Phase 7.9)**
+  - Added post-generation recommendation guardrails in `src/utils/gemini.js` to normalize output, remove duplicates, and enforce rejected-title exclusion before cards render.
+  - Added quality-floor enforcement so thin model output is topped up with deterministic TMDB fallback picks to preserve stable recommendation sets.
+  - Applied the same quality guardrail pass across both Gemini and OpenRouter Oracle response paths for more consistent discovery behavior.
+  - Upgraded Oracle taste-context hydration in `src/context/OracleContext.jsx` to derive user vibe signals from moods, genres, rating polarity, decade preference, and recent behavior before prompt assembly.
+  - Expanded taste weighting with deterministic mood/genre affinity scoring (frequency + bounded recency + high-rating lift), rating polarity buckets, and strict per-section caps to keep prompt context stable for large libraries.
+  - Added explicit avoid-like guidance from low-rated watched logs (`<= 2.5`) and ensured it remains in the Oracle context even when slices are truncated.
+  - Added Oracle weighting regression tests validating weighted context sections and avoid-like truncation behavior in `tests/oracle-query-intelligence.spec.ts`.
+  - Added Supabase RPC `get_oracle_taste_profile(p_user_id)` for server-side Oracle context hydration, then wired Oracle to use RPC-first with fail-soft fallback to local taste aggregation when RPC is unavailable.
+  - Added feature-flagged low-latency Groq intent parsing for Oracle query constraints (`VITE_FEATURE_ORACLE_GROQ_INTENT_PARSER=true`) with deterministic parser fallback to preserve reliability.
+  - Added Oracle constraint resolver tests covering Groq success/fallback behavior and RPC-compatible context ordering assertions.
+  - Documented rollout toggles in `.env.example` for Oracle RPC hydration (`VITE_FEATURE_ORACLE_TASTE_RPC`) and Groq constraint parsing (`VITE_FEATURE_ORACLE_GROQ_INTENT_PARSER`).
+  - Added a ranked `Now / Next / Later` execution order in `ROADMAP.md` for deferred Oracle upgrades (filter intelligence, reliability, media expansion, and polish tracks).
+  - Implemented Sprint A query intelligence: Oracle now parses compound prompt constraints (year bounds, genre hints, watch-status intent), passes deterministic `queryConstraints` through orchestration, and applies year/genre-aligned fallback filtering.
+  - Added safety toggle `VITE_FEATURE_ORACLE_QUERY_CONSTRAINTS` so constraint behavior can be enabled without removing legacy Oracle flow.
+  - Added parser validation coverage in `tests/oracle-query-intelligence.spec.ts` including prompts like “pre-1960 horror on my watchlist”.
+  - Implemented Sprint C reliability hardening: provider-specific timeout/retry contracts (`Gemini/OpenRouter=9000ms`, `TMDB=6000ms`) with deterministic fallback progression across Gemini -> OpenRouter -> TMDB.
+  - Added abort-aware Oracle request orchestration in `OracleContext` so rerolls/new discovery/unmount cancel in-flight work and ignore stale late responses.
+  - Added UI-safe fallback payload normalization to guarantee non-empty `rationale` and `vibeCheck` fields when metadata fallback paths are used.
+  - Expanded Oracle failure observability with normalized `failure_bucket` (`rate_limit`, `parse_fail`, `timeout`, `upstream_unavailable`, `unknown`) and additive `failure_stage` tags for Supabase analytics compatibility.
+  - Added additive `oracle_provider_events` migration coverage for `failure_bucket` and `failure_stage` so runtime telemetry fields remain schema-safe.
+  - Added reliability regression coverage for bucket mapping, retry policy boundaries, fallback shape safety, and abort classification in `tests/oracle-query-intelligence.spec.ts`.
+  - Expanded `oracle_provider_events` telemetry with additive hybrid metrics fields: `input_recommendation_count`, `post_filter_recommendation_count`, `dedupe_dropped_count`, `rejected_violation_attempt_count`, `provider_attempt_count`, `fallback_depth`, and `provider_attempts` JSON.
+  - Wired Oracle analytics payload mapping to persist expanded `_meta.qualityMetrics` and `_meta.attemptMetrics` safely while preserving legacy payload compatibility when telemetry blocks are absent.
+  - Added reroll-one analytics persistence and failure-path telemetry carry-through so discover/reroll flows both emit provider-attempt detail.
+  - Persisted provider-selection and ranking impact telemetry in `oracle_provider_events` (`selected_provider_ids`, `provider_match_count`, `provider_filtered_out_count`) while keeping payload defaults backward-compatible.
+  - Added deterministic provider-aware recommendation ranking after TMDB/provider enrichment so provider-matched cards are promoted first without hiding non-matches.
+  - Kept reroll-one index replacement behavior intact while applying ranking to full discover/reroll-all flows only.
+  - Extended Oracle query-intelligence tests with telemetry payload coverage for metric mapping, provider-attempt normalization, fallback-depth behavior, and backward compatibility.
+  - Added ranking regression coverage for deterministic provider promotion and no-preferences pass-through ordering.
+
+---
+
+## [1.12.23] - May 13, 2026
+
+### Changed
+
+- **Oracle / Gemini:** Reordered the Gemini model ladder to try **`gemini-2.0-flash` before `gemini-3.1-flash-lite`** for lower typical latency; **`gemini-3.1-flash-lite`** remains next in the chain so API keys that lack 2.0 or hit 2.0-only errors still get a modern GA fallback, followed by the existing 2.x / 1.5 model IDs before downstream OpenRouter and TMDB fallbacks.
+
+---
+
+## [1.12.22] - May 12, 2026
+
+### Changed
+
+- **Oracle:** Gemini ladder now tries **`gemini-3.1-flash-lite` (GA)** first, with existing Gemini 2.x / 1.5 model IDs as fallbacks when a candidate is unavailable or errors (Google preview retirement).
+
+---
+
+## [1.12.21] - May 6, 2026
+
+### Fixed
+
+- **Trending cards:** The two quick actions looked like duplicate “+” buttons; **Add to list** now uses a **list** icon and **Log** uses a **pencil** icon, with clearer `aria-label`s on icon-only controls.
+- **Add-to-list menu clipped:** Parent cards used `overflow: hidden`, which cut off the list dropdown (truncated text like “…movies”). Trending **backdrop images** are clipped inside `.backdrop-media-clip` only; search **movie posters** use `.movie-card-poster-clip` the same way so the card no longer clips the menu. Narrow screens use a safer dropdown width (`min(280px, 100vw - padding)`).
+
+---
+
+## [1.12.20] - May 6, 2026
+
+### Changed
+
+- Removed the **Creepster** display font (Google Fonts + `.font-creepster` utility). Page titles and the “Signal Lost” empty state now use the app’s system sans stack; **Matchmaker** and **Profile** social headings match the rest of the UI.
+
+---
+
+## [1.12.19] - May 6, 2026
+
+### Fixed
+
+- **Year in Review / Supabase:** Stopped selecting `movie_logs.watched_at` until the column exists. Recap dates use `created_at` from the query; `buildYearInReview` still supports `watched_at` on the log object when present (e.g. after migration). Added migration `20260507120000_movie_logs_watched_at.sql` to add optional `watched_at` for future use.
+
+---
+
+## [1.12.18] - May 6, 2026
+
+### Added
+
+- **Year in Review (Phase 6.8)** — Profile links to **`/year-in-review`**, a wrapped-style recap by calendar year: films watched (status watched + hybrid log dates), monthly counts, rating distribution and average (rated logs only), top genres and moods, physical UPC count, and reviews written. Year picker covers 2015–current year; optional URL **`/year-in-review/:year`**. Aggregation is client-side via **`buildYearInReview`** in `src/utils/yearInReview.js`. See **`artifacts/adr-year-in-review.md`** for date and metric rules.
+
+---
+
+## [1.12.17] - May 6, 2026
+
+### Fixed
+
+- **Oracle Discovery**: Single-card **Reroll** now invokes `handleRerollByTmdbId` from context (previously referenced an undefined `onRerollByTmdbId`, which threw at runtime when rerolling one recommendation).
+
+### Changed
+
+- **ESLint**: Ignore Capacitor `android/**` and `public/sw.js` so `npm run lint` does not parse generated native bundles or the service worker as generic scripts. Added global `settings.react.version` (`detect`) to silence redundant React plugin warnings.
+- Tidied unused destructuring names in shared-list list-item fallbacks (`sharedLists.js`, `ArchiveImporterModal.jsx`) so lint stays warning-clean for those paths.
+
+---
+
+## [1.12.16] - May 6, 2026
+
+### Added
+
+- **Library Advanced Search (Phase 6.10)** — On **Library** → **Find & refine**, open **Advanced search** to combine mood chips (palette-aligned, any/all moods), genre checkboxes from your logged TMDB genres, and min/max **your rating** (0–5, 0.5 steps). Filters apply to the current shelf (Watched, Watchlist, or Collection) and respect title search, smart filter, and sort. Global TMDB **Search** is unchanged.
+
+---
+
+## [1.12.15] - April 29, 2026
+
+### 🛠️ Changed
+
+- **Oracle intelligence integration pass (Phase 7.9)**
+  - Merged Sprint B taste-weighting upgrades and Sprint C reliability hardening into one release-ready branch.
+  - Preserved RPC-first taste hydration (`get_oracle_taste_profile`) with deterministic local fallback (`buildUserTasteProfile` / `buildTasteContextString`).
+  - Preserved Groq intent parsing fast-path with deterministic query parser fallback for Oracle constraints.
+  - Added provider-specific reliability controls in Oracle orchestration (timeouts, bounded retries, abort-safe reroll/discover flow, and deterministic fallback sequencing).
+  - Added normalized failure telemetry buckets/stage tagging for `oracle_provider_events` compatibility and observability.
+  - Kept UI-safe recommendation payload normalization for fallback paths (`rationale` / `vibeCheck` always present).
+
+### ✅ Quality
+
+- Combined Oracle regression suite passes: `npx playwright test "tests/oracle-query-intelligence.spec.ts"`.
+- Production build succeeds: `npm run build`.
+- Release metadata synced to `v1.12.15` across `package.json`, `src/constants.js`, and roadmap current-version status.
 
 ---
 
@@ -561,25 +685,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## Latest Version: 1.8.0 (March 29, 2026)
-
-**Highlights:**
-
-- 🔮 **Oracle** - AI-powered movie discovery with mood-based recommendations
-- 🤝 **The Matchmaker** - Social compatibility feature for comparing movie tastes with friends
-- 🎭 **6 Mood Presets** - Quick-select bubbles for instant vibe matching
-- 📱 **Mobile Navigation** - Discover page movie cards now clickable
-- 🎨 **Deep Ember Theme** - Consistent dark aesthetic with amber/orange accents
-
-**Quick Links:**
-
-- [Full v1.8.0 Notes](#180---march-29-2026)
-- [Previous: v1.7.0](#170---march-28-2026)
-- [Roadmap](./ROADMAP.md)
-- [README](./README.md)
-
----
-
 ## [1.8.0] - March 29, 2026
 
 ### 🚀 Added
@@ -1078,97 +1183,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Better Component Structure** - Separated skeleton loading components
 - **Reduced Code Bloat** - Net reduction of 110 lines while adding features
 
-### 🛠️ Changed
-
-#### Frontend (`src/pages/LibraryPage.jsx`)
-
-- **Magic Import Button** - Added "✨ Magic Import" button in library header
-- **Import Modal Integration** - `showImportModal` state and `ArchiveImporterModal` component
-- **Refresh Handler** - Library refreshes automatically after successful import
-
-#### New Files
-
-- **ArchiveImporterModal.jsx** - 4-step modal component with React Portal
-- **ArchiveImporterModal.css** - Deep Ember themed modal styling
-- **importer.js** - Utility module with Groq parsing and TMDB verification
-
-#### Backend (`src/utils/importer.js`)
-
-- **`parseArchiveWithGroq()`** - Groq API integration with system prompt engineering
-- **`verifyBatchWithTMDB()`** - Batch TMDB verification with error handling
-- **`batchSaveMovies()`** - Optimized single-request UPSERT for movie_logs table
-
-### ⚡ Performance
-
-#### Parallel Processing
-
-- **Groq Parsing** - ~300-600ms for typical lists (10-30 movies)
-- **TMDB Verification** - Parallel fetching reduces total time by 70-80%
-- **Batch Save** - Single network request vs. N individual inserts
-
-#### Deduplication Efficiency
-
-- **Database-Level** - `onConflict` constraint handles duplicates automatically
-- **No Pre-Checks Needed** - Eliminates need for separate existence queries
-- **Skipped Count Tracking** - Reports how many movies were already in library
-
-### 🎨 UI/UX
-
-#### Modal Design
-
-- **Step-by-Step Wizard** - Clear progression with visual feedback
-- **Review Grid** - Card-based layout with posters and parsed vs. TMDB titles
-- **Checkbox Selection** - Individual toggle with select/deselect all actions
-- **Loading States** - Spinner and progress indicators during verification
-- **Success Stats** - Post-import breakdown of saved/skipped/errors
-
-#### Deep Ember Theme
-
-- **Dark Zinc Backgrounds** - Consistent with app aesthetic
-- **Amber Accents** - Orange highlights for primary actions
-- **Status Indicators** - Red for not found, green for success
-- **Responsive Grid** - Multi-column layout for review cards
-
-### 📝 Documentation
-
-#### Updated Files
-
-- **CHANGELOG.md** - Comprehensive v1.5.0 release notes
-- **README.md** - Magic Importer feature documentation
-- **ROADMAP.md** - Bulk import marked as complete
-
-### 🐛 Fixed
-
-#### Bug Fixes
-
-- **Modal Portal Rendering** - Uses `createPortal` for proper z-index stacking
-- **Checkbox Event Bubbling** - `stopPropagation` prevents card click conflicts
-- **Empty State Handling** - Graceful handling of lists with no custom lists
-- **Year Parsing** - Handles "N/A" for movies without release years
-- **Poster Fallback** - Shows "No Poster" placeholder when TMDB has no image
-- **Groq JSON Parsing** - Handles single movie objects in addition to arrays
-- **Single Movie Import** - Now accepts titles without years (e.g., "Shrek", "Jaws")
-
----
-
-## [1.4.1] - March 26, 2026
-
-**Highlights:**
-
-- 🧠 **Personalized Oracle** - AI now knows your ENTIRE movie history (zero duplicates guaranteed)
-- 📚 **Three-Bucket Memory Fetch** - Watched + Watchlist + Custom Lists loaded in parallel
-- 🎯 **Taste Triangulation** - AI analyzes your high-rated films before recommending
-- ⚡ **Optimized Supabase Joins** - Efficient `lists!inner(user_id)` join for custom lists
-
-**Quick Links:**
-
-- [Full v1.4.1 Notes](#141---march-26-2026)
-- [Previous: v1.4.0](#140---march-26-2026)
-- [Roadmap](./ROADMAP.md)
-- [README](./README.md)
-
----
-
 ## [1.4.1] - March 26, 2026
 
 ### 🚀 Added
@@ -1390,26 +1404,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## Latest Version: 1.3.8 (March 24, 2026)
-
-**Highlights:**
-
-- 🔧 Logo text "FILMGRAPH" now visible on all screen sizes
-- 📝 Changelog page with dedicated route (/changelog)
-- 🤖 Oracle with Reject & Reroll feature
-- 🔐 Remember Me checkbox with dynamic storage
-- 📱 Responsive library grid (`grid-cols-2 md:grid-cols-4 lg:grid-cols-6`)
-- 🎯 Oracle vibe mapping fixed - "Brain Mush" now works
-
-**Quick Links:**
-
-- [Full v1.3.8 Notes](#138---march-24-2026)
-- [Oracle v1.3.2](#132---march-24-2026)
-- [Roadmap](./ROADMAP.md)
-- [README](./README.md)
-
----
-
 ## [1.3.8] - March 24, 2026
 
 ### 🐛 Fixed
@@ -1490,7 +1484,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.5] - 2026-03-24
+## [1.3.5] - March 24, 2026
 
 ### 🐛 Fixed
 
@@ -1530,7 +1524,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.4] - 2026-03-24
+## [1.3.4] - March 24, 2026
 
 ### 🧠 Fixed
 
@@ -1558,7 +1552,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.3] - 2026-03-24
+## [1.3.3] - March 24, 2026
 
 ### 🔐 Added
 
@@ -1593,7 +1587,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.2] - 2026-03-24
+## [1.3.2] - March 24, 2026
 
 ### 🎉 Added
 
@@ -1632,7 +1626,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.1] - 2026-03-24
+## [1.3.1] - March 24, 2026
 
 ### 🐛 Fixed
 
@@ -1660,7 +1654,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.0] - 2026-03-24
+## [1.3.0] - March 24, 2026
 
 ### 🎉 Added
 
@@ -1733,7 +1727,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.2.0] - 2026-03-24
+## [1.2.0] - March 24, 2026
 
 ### 🎉 Added
 
@@ -1807,7 +1801,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.1.0] - 2026-03-24
+## [1.1.0] - March 24, 2026
 
 ### 🎉 Added
 
@@ -1863,7 +1857,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.0] - 2026-03-XX
+## [1.0.0] - March XX, 2026
 
 ### 🎉 Initial Release
 

@@ -1,10 +1,50 @@
-import { getSupabase } from "../supabaseClient";
+import { getOracleFailureBucket } from "./oracleReliability";
 
 const ADMIN_EMAIL = "sonofloke@gmail.com";
 
 const cleanText = (value) => {
   if (!value) return null;
   return String(value).trim().slice(0, 500) || null;
+};
+
+const parseOptionalNonNegativeInt = (value) => {
+  if (value == null || value === "") return null;
+  const parsed = Number.parseInt(String(value), 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return parsed;
+};
+
+const normalizeProviderAttempt = (attempt) => {
+  if (!attempt || typeof attempt !== "object") return null;
+  const latency = parseOptionalNonNegativeInt(attempt.latency_ms);
+  return {
+    provider: cleanText(attempt.provider),
+    model: cleanText(attempt.model),
+    result: cleanText(attempt.result),
+    status: cleanText(attempt.status),
+    failure_bucket: cleanText(attempt.failure_bucket),
+    latency_ms: latency,
+  };
+};
+
+const normalizeProviderAttempts = (attempts) => {
+  if (!Array.isArray(attempts)) return [];
+  return attempts
+    .map((attempt) => normalizeProviderAttempt(attempt))
+    .filter(Boolean);
+};
+
+const normalizeSelectedProviderIds = (providerIds) => {
+  if (!Array.isArray(providerIds)) return [];
+  const seen = new Set();
+  return providerIds
+    .map((value) => Number.parseInt(String(value), 10))
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .filter((value) => {
+      if (seen.has(value)) return false;
+      seen.add(value);
+      return true;
+    });
 };
 
 export const parseLatencyMs = (latency) => {
@@ -27,6 +67,8 @@ export const classifyOracleError = (error) => {
   const tagged = raw.match(/\[oracle:([a-z]+)(?::(\d+))?\]/i);
   const taggedProvider = tagged?.[1] || provider || null;
   const taggedStatus = tagged?.[2] || status || null;
+  const failureBucket = getOracleFailureBucket(error);
+  const failureStage = taggedProvider || "orchestration";
   if (!raw) return { errorCode: null, fallbackReason: null };
 
   if (raw.includes("daily oracle limit")) {
@@ -35,6 +77,8 @@ export const classifyOracleError = (error) => {
       fallbackReason: "budget_limit",
       provider: taggedProvider,
       statusCode: taggedStatus,
+      failureBucket,
+      failureStage,
     };
   }
   if (raw.includes("openrouter")) {
@@ -44,6 +88,8 @@ export const classifyOracleError = (error) => {
       fallbackReason: "openrouter_unavailable",
       provider: taggedProvider || "openrouter",
       statusCode: taggedStatus,
+      failureBucket,
+      failureStage,
     };
   }
   if (raw.includes("tmdb")) {
@@ -52,6 +98,8 @@ export const classifyOracleError = (error) => {
       fallbackReason: "tmdb_unavailable",
       provider: taggedProvider || "tmdb",
       statusCode: taggedStatus,
+      failureBucket,
+      failureStage,
     };
   }
   if (raw.includes("gemini") || raw.includes("oracle is silent")) {
@@ -61,6 +109,8 @@ export const classifyOracleError = (error) => {
       fallbackReason: "gemini_unavailable",
       provider: taggedProvider || "gemini",
       statusCode: taggedStatus,
+      failureBucket,
+      failureStage,
     };
   }
   if (raw.includes("network") || raw.includes("fetch")) {
@@ -69,6 +119,8 @@ export const classifyOracleError = (error) => {
       fallbackReason: "network_error",
       provider: taggedProvider,
       statusCode: taggedStatus,
+      failureBucket,
+      failureStage,
     };
   }
 
@@ -77,6 +129,8 @@ export const classifyOracleError = (error) => {
     fallbackReason: null,
     provider: taggedProvider,
     statusCode: taggedStatus,
+    failureBucket,
+    failureStage,
   };
 };
 
@@ -86,17 +140,26 @@ export const buildOracleEventPayload = ({
   success,
   fallbackReason,
   errorCode,
+  failureBucket,
+  failureStage,
   errorMessage,
   budgetSource,
   requestSource,
   promptType,
   recommendationCount = 0,
   tmdbHitCount = 0,
+  selectedProviderIds = [],
 }) => {
   const safeRecommendations = Math.max(0, Number(recommendationCount) || 0);
   const safeHits = Math.max(0, Number(tmdbHitCount) || 0);
   const tmdbHitRate =
     safeRecommendations > 0 ? safeHits / safeRecommendations : 0;
+  const qualityMetrics = meta?.qualityMetrics || {};
+  const attemptMetrics = meta?.attemptMetrics || {};
+  const rankingMetrics = meta?.rankingMetrics || {};
+  const resolvedSelectedProviderIds = normalizeSelectedProviderIds(
+    selectedProviderIds.length > 0 ? selectedProviderIds : meta?.selectedProviderIds,
+  );
 
   return {
     user_id: userId,
@@ -107,6 +170,8 @@ export const buildOracleEventPayload = ({
     success: Boolean(success),
     fallback_reason: cleanText(fallbackReason || meta?.fallbackReason),
     error_code: cleanText(errorCode),
+    failure_bucket: cleanText(failureBucket),
+    failure_stage: cleanText(failureStage),
     error_message: cleanText(errorMessage),
     budget_source: cleanText(budgetSource),
     request_source: cleanText(requestSource),
@@ -114,11 +179,34 @@ export const buildOracleEventPayload = ({
     recommendation_count: safeRecommendations,
     tmdb_hit_count: safeHits,
     tmdb_hit_rate: Number(tmdbHitRate.toFixed(4)),
+    input_recommendation_count: parseOptionalNonNegativeInt(
+      qualityMetrics.inputRecommendationCount,
+    ),
+    post_filter_recommendation_count: parseOptionalNonNegativeInt(
+      qualityMetrics.postFilterRecommendationCount,
+    ),
+    dedupe_dropped_count: parseOptionalNonNegativeInt(
+      qualityMetrics.dedupeDroppedCount,
+    ),
+    rejected_violation_attempt_count: parseOptionalNonNegativeInt(
+      qualityMetrics.rejectedViolationAttemptCount,
+    ),
+    provider_attempt_count: parseOptionalNonNegativeInt(
+      attemptMetrics.providerAttemptCount,
+    ),
+    fallback_depth: parseOptionalNonNegativeInt(attemptMetrics.fallbackDepth),
+    provider_attempts: normalizeProviderAttempts(attemptMetrics.providerAttempts),
+    selected_provider_ids: resolvedSelectedProviderIds,
+    provider_match_count:
+      parseOptionalNonNegativeInt(rankingMetrics.matchedRecommendationCount) || 0,
+    provider_filtered_out_count:
+      parseOptionalNonNegativeInt(rankingMetrics.filteredOutCount) || 0,
   };
 };
 
 export const trackOracleProviderEvent = async (eventPayload) => {
   try {
+    const { getSupabase } = await import("../supabaseClient");
     const supabase = getSupabase();
     const { error } = await supabase
       .from("oracle_provider_events")

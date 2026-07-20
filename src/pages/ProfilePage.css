@@ -248,6 +248,19 @@
   text-decoration: none;
 }
 
+.streaming-preferences-hint {
+  margin: -8px 0 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #a1a1aa;
+}
+
+.streaming-preferences-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 /* Social Hub Section */
 .social-hub-section {
   margin-bottom: 24px;
@@ -602,6 +615,34 @@
   .secondary-stats-grid {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.profile-year-recap {
+  margin-bottom: 28px;
+  padding: 18px 20px;
+  background: #121212;
+  border-radius: 12px;
+  border: 1px solid rgba(251, 146, 60, 0.22);
+}
+
+.profile-year-recap-link {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #fb923c;
+  text-decoration: none;
+}
+
+.profile-year-recap-link:hover {
+  color: #fdba74;
+  text-decoration: underline;
+}
+
+.profile-year-recap-hint {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+  color: #888888;
+  line-height: 1.45;
 }
 
 /* Search Bar Wrapper - Ensure visibility */

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUser } from "../context/UserContext";
+import { useToast } from "../context/ToastContext";
 import AddToListButton from "./AddToListButton";
 import LogMovieModal from "./LogMovieModal";
 import "./QuickMovieActions.css";
@@ -14,6 +15,7 @@ function normalizePosterPath(movie) {
 
 function QuickMovieActions({ movie, className = "" }) {
   const { isAuthenticated } = useUser();
+  const toast = useToast();
   const [showModal, setShowModal] = useState(false);
 
   if (!isAuthenticated) return null;
@@ -38,10 +40,12 @@ function QuickMovieActions({ movie, className = "" }) {
             event.stopPropagation();
             setShowModal(true);
           }}
-          title="Log Movie"
+          title="Log this film"
+          aria-label="Log this film"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12h14" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
           </svg>
         </button>
       </div>
@@ -50,7 +54,10 @@ function QuickMovieActions({ movie, className = "" }) {
         <LogMovieModal
           movie={normalizedMovie}
           onClose={() => setShowModal(false)}
-          onLogged={() => setShowModal(false)}
+          onSaved={() => {
+            setShowModal(false);
+            toast.success(`"${normalizedMovie.title}" logged successfully!`);
+          }}
         />
       )}
     </>

@@ -80,9 +80,6 @@
     transform: translateY(-1px);
   }
 
-  .font-creepster {
-    font-family: "Creepster", cursive;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

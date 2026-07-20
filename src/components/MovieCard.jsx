@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LogMovieModal from './LogMovieModal';
 import AddToListButton from './AddToListButton';
+import { useToast } from '../context/ToastContext';
 import './MovieCard.css';
 
 function MovieCard({
@@ -12,6 +13,7 @@ function MovieCard({
   onDelete,
 }) {
   const navigate = useNavigate();
+  const toast = useToast();
   const [showModal, setShowModal] = useState(false);
 
   const handleCardClick = () => {
@@ -220,7 +222,10 @@ function MovieCard({
         <LogMovieModal
           movie={movie}
           onClose={() => setShowModal(false)}
-          onLogged={() => setShowModal(false)}
+          onSaved={() => {
+            setShowModal(false);
+            toast.success(`"${movie.title}" logged successfully!`);
+          }}
         />
       )}
     </>

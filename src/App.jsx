@@ -37,6 +37,7 @@ const DiscoveryPage = lazy(() => import("./pages/DiscoveryPage"));
 const MatchmakerPage = lazy(() => import("./pages/MatchmakerPage"));
 const SynergyDashboard = lazy(() => import("./pages/SynergyDashboard"));
 const OracleAnalyticsPage = lazy(() => import("./pages/OracleAnalyticsPage"));
+const YearInReviewPage = lazy(() => import("./pages/YearInReviewPage"));
 
 // ============================================
 // HEADER - SOLID SEARCH SYSTEM (NO MORE BUGS)
@@ -448,6 +449,22 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/year-in-review"
+                element={
+                  <ProtectedRoute>
+                    <YearInReviewPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/year-in-review/:year"
+                element={
+                  <ProtectedRoute>
+                    <YearInReviewPage />
                   </ProtectedRoute>
                 }
               />

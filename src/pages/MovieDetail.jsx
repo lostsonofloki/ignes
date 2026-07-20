@@ -323,6 +323,8 @@ function MovieDetail() {
     setUserLog(savedLog);
     setEditingLog(null);
     setShowLogModal(false);
+    const loggedTitle = savedLog?.title || movie?.title || "Movie";
+    toast.success(`"${loggedTitle}" logged successfully!`);
   };
 
   const handleToggleWatchlist = async () => {
@@ -427,20 +429,18 @@ function MovieDetail() {
   // Ghost Hunter Fix - catches invalid IDs, empty data, or TMDB returning 200 OK with no data
   if (!movie || !movie.title) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+      <div className="movie-not-found-state">
         <SeoHead
           title="Movie Not Found"
           description="The requested movie could not be found in Filmgraph's archive."
           pathname={`/movie/${id}`}
         />
-        <h2 className="text-4xl font-creepster text-accent mb-4">
-          Signal Lost
-        </h2>
-        <p className="text-text-muted mb-8 max-w-md">
+        <h2 className="movie-not-found-title">Signal Lost</h2>
+        <p className="movie-not-found-copy">
           The archives have no record of this tape. It may have been corrupted,
           deleted, or it never existed at all.
         </p>
-        <button onClick={handleBack} className="btn-primary">
+        <button type="button" onClick={handleBack} className="btn-primary">
           Return to Library
         </button>
       </div>

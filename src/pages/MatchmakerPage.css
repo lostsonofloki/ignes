@@ -17,13 +17,13 @@
 }
 
 .matchmaker-title {
-  font-family: 'Creepster', cursive;
-  font-size: 48px;
-  font-weight: 700;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 800;
   color: #f97316;
   margin: 0 0 12px 0;
-  text-shadow: 0 0 20px rgba(249, 115, 22, 0.3);
-  letter-spacing: 2px;
+  text-shadow: 0 0 20px rgba(249, 115, 22, 0.25);
+  letter-spacing: -0.03em;
 }
 
 .matchmaker-subtitle {
